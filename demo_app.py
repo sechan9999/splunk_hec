@@ -313,9 +313,22 @@ with tab_agent:
         if cols[i].button(q, key=f"quick_{i}", use_container_width=True):
             with st.spinner("Running..."):
                 r = agent_run(q, "demo")
-            if isinstance(r.get("result", {}), dict) and r["result"].get("response"):
-                st.info(r["result"]["response"])
-            st.json(r)
+            res_obj = r.get("result", {})
+            if isinstance(res_obj, dict) and res_obj.get("response"):
+                st.info(res_obj["response"])
+            steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
+            if steps:
+                st.markdown("**Tool Calls**")
+                for step in steps:
+                    tool = step.get("tool", step.get("tool_name", "?"))
+                    res  = step.get("result", step.get("output", ""))
+                    with st.expander(f"🔧 `{tool}`"):
+                        if isinstance(res, dict):
+                            st.json(res)
+                        else:
+                            st.code(str(res)[:2000], language="text")
+            with st.expander("📄 Raw response"):
+                st.json(r)
 
 # ── Tab 2: Live Splunk Events ─────────────────────────────────────────────────
 with tab_events:
