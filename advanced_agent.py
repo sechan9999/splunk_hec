@@ -390,12 +390,11 @@ class AdvancedMCPAgent:
             "requires_supabase": False,
         }
 
-        # Supabase 가입자/회원 데이터 의도 (가장 구체적이므로 먼저 확인)
+        # Supabase 누적 방문자 데이터 의도 (가장 구체적이므로 먼저 확인)
         supabase_keywords = [
-            "가입", "가입자", "신규 가입", "회원가입", "신규 회원", "신규 사용자",
-            "signup", "sign-up", "sign up", "new user", "new users",
-            "new signup", "new signups", "registration", "registrations",
-            "registered", "supabase",
+            "방문자", "누적 방문자", "방문자 수", "누적 방문", "방문 수",
+            "visitor", "visitors", "cumulative visitor", "cumulative visitors",
+            "total visitors", "visitor count", "number of visitors", "supabase",
         ]
         if any(w in query_lower for w in supabase_keywords):
             analysis["intent"] = "supabase_query"
@@ -588,40 +587,27 @@ def process_data(data):
             return {"error": str(e), "results": [], "summary": "Splunk query failed"}
 
     async def _tool_supabase_query(self, query: str, context: AgentContext) -> Dict:
-        """Supabase 신규 가입자 조회 도구.
+        """Supabase 누적 방문자 조회 도구.
 
         SUPABASE_URL / SUPABASE_KEY 환경변수가 설정되면 실제 Supabase REST(PostgREST)
-        에서 최근 N일 신규 가입자 수를 집계한다. 미설정 시 데모 값으로 폴백한다.
-        테이블/타임스탬프 컬럼: SUPABASE_SIGNUPS_TABLE(기본 profiles),
-        SUPABASE_SIGNUPS_TS_COL(기본 created_at).
+        에서 누적(전체) 방문자 수를 집계한다. 미설정 시 데모 값으로 폴백한다.
+        테이블: SUPABASE_VISITORS_TABLE(기본 visitors).
         """
         import os
-        import re
-        from datetime import datetime, timedelta
-
-        days = 7
-        m = re.search(r"(\d+)\s*(?:일|day|days)", query.lower())
-        if m:
-            try:
-                days = max(1, min(int(m.group(1)), 365))
-            except ValueError:
-                days = 7
 
         url   = os.getenv("SUPABASE_URL", "").rstrip("/")
         key   = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_KEY", "")
-        table = os.getenv("SUPABASE_SIGNUPS_TABLE", "profiles")
-        tscol = os.getenv("SUPABASE_SIGNUPS_TS_COL", "created_at")
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        table = os.getenv("SUPABASE_VISITORS_TABLE", "visitors")
 
         if not url or not key:
             import random
-            n = random.randint(80, 260)
+            n = random.randint(5000, 50000)
             return {
-                "source": "demo", "metric": "new_signups", "window_days": days,
-                "count": n, "table": table, "ts_column": tscol,
-                "summary": (f"[Demo] Last {days} days: {n} new signups "
+                "source": "demo", "metric": "cumulative_visitors",
+                "count": n, "table": table,
+                "summary": (f"[Demo] Cumulative visitors: {n:,} "
                             f"(SUPABASE_URL/KEY not set — simulated). "
-                            f"Real data: set env vars; aggregates {table}.{tscol}."),
+                            f"Real data: set env vars; total rows in {table}."),
             }
 
         try:
@@ -634,7 +620,7 @@ def process_data(data):
                     "Prefer": "count=exact",
                     "Range": "0-0",
                 },
-                params={"select": tscol, tscol: f"gte.{since}"},
+                params={"select": "*"},
                 timeout=10,
             )
             total = None
@@ -649,14 +635,13 @@ def process_data(data):
                 except Exception:
                     total = 0
             return {
-                "source": "supabase", "metric": "new_signups", "window_days": days,
-                "count": total, "table": table, "ts_column": tscol, "since": since,
-                "summary": f"Last {days} days: {total} new signups "
-                           f"(Supabase {table}.{tscol}).",
+                "source": "supabase", "metric": "cumulative_visitors",
+                "count": total, "table": table,
+                "summary": f"Cumulative visitors: {total:,} (Supabase {table}).",
             }
         except Exception as e:
             return {
-                "source": "error", "metric": "new_signups", "window_days": days,
+                "source": "error", "metric": "cumulative_visitors",
                 "count": None, "error": str(e),
                 "summary": f"Supabase query failed: {e}",
             }
@@ -682,10 +667,10 @@ def process_data(data):
                 synthesized["documentation"] = r["result"]["docs"]
                 break
 
-        # 가입자 등 요약 답변이 있으면 상단 응답으로 노출
+        # 방문자 등 요약 답변이 있으면 상단 응답으로 노출
         for r in results:
             res = r.get("result", {})
-            if isinstance(res, dict) and res.get("metric") == "new_signups":
+            if isinstance(res, dict) and res.get("metric") == "cumulative_visitors":
                 synthesized["response"] = res.get("summary", "")
                 break
 
