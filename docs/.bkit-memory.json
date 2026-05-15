@@ -1,10 +1,8 @@
 {
   "version": "2.0",
   "lastUpdated": "2026-05-15T17:05:00.000Z",
-  "activeFeatures": [
-    "splunk-hec-emitter"
-  ],
-  "primaryFeature": "splunk-hec-emitter",
+  "activeFeatures": [],
+  "primaryFeature": null,
   "features": {
     "splunk-auto-remediation": {
       "phase": "archived",
@@ -31,14 +29,12 @@
       "archivedTo": "docs/archive/2026-05/splunk-mcp-tool/"
     },
     "splunk-hec-emitter": {
-      "phase": "completed",
-      "planCreatedAt": "2026-05-15T12:00:00.000Z",
-      "designCreatedAt": "2026-05-15T12:10:00.000Z",
-      "doStartedAt": "2026-05-15T12:20:00.000Z",
-      "checkAt": "2026-05-15T12:30:00.000Z",
+      "phase": "archived",
       "matchRate": 96,
       "iterationCount": 0,
-      "taskId": 4
+      "startedAt": "2026-05-15T12:00:00.000Z",
+      "archivedAt": "2026-05-15T17:12:00.000Z",
+      "archivedTo": "docs/archive/2026-05/splunk-hec-emitter/"
     }
   },
   "pipeline": {

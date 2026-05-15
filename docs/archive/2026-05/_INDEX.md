@@ -5,3 +5,4 @@
 | splunk-auto-remediation | 100% | 2026-05-15 | [docs](splunk-auto-remediation/) |
 | splunk-soar-brigde | 100% | 2026-05-15 | [docs](splunk-soar-brigde/) |
 | splunk-mcp-tool | 100% | 2026-05-15 | [docs](splunk-mcp-tool/) |
+| splunk-hec-emitter | 96% | 2026-05-15 | [docs](splunk-hec-emitter/) |
