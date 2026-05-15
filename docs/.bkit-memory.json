@@ -60,9 +60,9 @@
       "at": "2026-05-15T12:00:00.000Z"
     }
   ],
-  "sessionCount": 2,
+  "sessionCount": 3,
   "lastSession": {
-    "startedAt": "2026-05-15T16:58:18.556Z",
+    "startedAt": "2026-05-15T17:32:11.514Z",
     "platform": "claude",
     "level": "Enterprise"
   }
