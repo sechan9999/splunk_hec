@@ -170,7 +170,9 @@ with tab_agent:
                 result = agent_run(query, user_id)
                 elapsed = time.time() - t0
 
-            if "error" in result and not result.get("success"):
+            failed = result.get("success") is False or (
+                "error" in result and not result.get("success"))
+            if failed:
                 st.error(f"Error: {result}")
             else:
                 st.success(f"완료 — {elapsed:.2f}s")
@@ -297,15 +299,21 @@ with tab_remediation:
             any_result = True
             resp = st.session_state[key]
             handled = resp.get("handled", False)
-            with st.expander(f"{'✅' if handled else '⚠️'} {label} — 결과", expanded=True):
+            skipped = resp.get("skipped", False)
+            icon = "✅" if handled else ("⏭️" if skipped else "⚠️")
+            with st.expander(f"{icon} {label} — 결과", expanded=True):
                 if handled:
                     st.success(f"handled=True | anomaly_value={resp.get('anomaly_value')} ≥ threshold={resp.get('threshold')}")
                     actions = resp.get("actions", [])
                     for act in actions:
                         st.markdown(f"- **{act['action']}**: `{act['result']}`")
                     st.caption(f"cooldown={resp.get('cooldown_sec')}s")
+                elif skipped:
+                    st.info(f"⏭️ Skipped (cooldown) — {resp.get('reason', 'cooldown active')}")
+                elif resp.get("error"):
+                    st.error(f"연결 실패 — {resp.get('error')}")
                 else:
-                    st.warning(f"handled=False — {resp}")
+                    st.warning(f"Not handled — {resp.get('reason', resp)}")
 
     if not any_result:
         st.info("위 버튼을 눌러 이상 시나리오를 시뮬레이션하세요.")
@@ -345,7 +353,8 @@ with tab_soar:
         col_a, col_b = st.columns(2)
         with col_a:
             st.markdown("**Agent Response**")
-            steps = resp.get("result", {}).get("tool_results", [])
+            res_obj = resp.get("result", {})
+            steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
             if steps:
                 for s in steps:
                     st.markdown(f"- `{s.get('tool')}`: {str(s.get('result',''))[:200]}")
