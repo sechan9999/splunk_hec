@@ -1,7 +1,7 @@
 # 🔥 MCPAgents × Splunk — Agentic Ops Control Center
 
 > **Splunk Agentic Ops Hackathon 2026** (May 18 – Jun 15, 2026)  
-> Built on: [sechan9999/MCPagents](https://github.com/sechan9999/MCPagents) + [sechan9999/splunk-app-examples](https://github.com/sechan9999/splunk-app-examples)
+> Built on: [sechan9999/MCPagents](https://github.com/sechan9999/MCPagents) + [sechan9999/splunk-app-examples](https://github.com/sechan9999/splunk-app-examples)   https://sechan9999.github.io/splunk_hec/     
 
 ## 🎯 핵심 혁신: Closed-Loop Agentic Ops
 
