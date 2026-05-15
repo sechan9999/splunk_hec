@@ -54,11 +54,11 @@ def _demo_agent_run(query):
     return {
         "success": True, "query": query,
         "result": {
-            "response": f"[Demo] '{query}' 분석 완료. 최근 1시간 동안 총 $4.23 비용 발생, 평균 레이턴시 320ms, DLP 위반 2건 감지됨.",
+            "response": f"[Demo] Analysis complete for '{query}'. Total cost $4.23 in the last hour, avg latency 320ms, 2 DLP violations detected.",
             "model": model, "latency_ms": random.randint(180, 900),
             "cost_usd": round(random.uniform(0.01, 0.15), 4),
             "tool_results": [
-                {"tool": "splunk_query", "result": {"spl": f"index=mcp_agents | stats count by model", "rows": 5}},
+                {"tool": "splunk_query", "result": {"spl": "index=mcp_agents | stats count by model", "rows": 5}},
                 {"tool": "cost_analyzer", "result": {"total_cost": 4.23, "top_model": model}},
             ],
         },
@@ -99,7 +99,7 @@ def _demo_alert(anomaly_type, value):
 with st.sidebar:
     st.title("⚙️ Configuration")
     demo_mode = st.toggle("🎮 Demo Mode", value=True,
-                          help="시뮬레이션 데이터로 UI를 체험합니다. 실제 백엔드 연결 시 끄세요.")
+                          help="Run with simulated data. Turn off to connect to real backends.")
     st.divider()
     mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
     splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
@@ -230,14 +230,14 @@ with tab_agent:
     st.subheader("Run MCPAgents Query")
     col_q, col_u = st.columns([4, 1])
     with col_q:
-        query = st.text_input("Query", placeholder="e.g. 지난 1시간 LLM 비용 얼마야?",
+        query = st.text_input("Query", placeholder="e.g. What was the LLM cost in the last hour?",
                               label_visibility="collapsed")
     with col_u:
         user_id = st.text_input("User ID", "demo", label_visibility="collapsed")
 
     if st.button("▶ Run Agent", type="primary", use_container_width=True):
         if not query:
-            st.warning("쿼리를 입력하세요.")
+            st.warning("Please enter a query.")
         else:
             with st.spinner("Running agent..."):
                 t0 = time.time()
@@ -249,7 +249,7 @@ with tab_agent:
             if failed:
                 st.error(f"Error: {result}")
             else:
-                st.success(f"완료 — {elapsed:.2f}s")
+                st.success(f"Complete — {elapsed:.2f}s")
                 res_obj = result.get("result", {})
                 # Show response text
                 if isinstance(res_obj, dict) and res_obj.get("response"):
@@ -270,12 +270,12 @@ with tab_agent:
                     st.json(result)
 
     st.divider()
-    st.markdown("**Quick prompts**")
+    st.markdown("**Quick Prompts**")
     quick = [
-        "지난 1시간 LLM 비용 얼마야?",
-        "최근 DLP 위반 목록 보여줘",
-        "오늘 에러율이 가장 높은 모델은?",
-        "캐시 히트율 통계 알려줘",
+        "LLM cost in the last hour?",
+        "Show recent DLP violations",
+        "Model with highest error rate today?",
+        "Cache hit rate statistics",
     ]
     cols = st.columns(len(quick))
     for i, q in enumerate(quick):
@@ -306,9 +306,9 @@ with tab_events:
             rows = splunk_search(spl_filter, earliest=earliest)
 
         if not rows:
-            st.info("이벤트 없음 — Splunk에 데이터가 없거나 연결을 확인하세요.")
+            st.info("No events — check Splunk connection or verify data exists.")
         else:
-            st.success(f"{len(rows)}개 이벤트")
+            st.success(f"{len(rows)} events")
             display = []
             for r in rows:
                 display.append({
@@ -323,12 +323,12 @@ with tab_events:
                 st.json(rows[:5])
 
     st.divider()
-    st.markdown("**SPL 예시 쿼리**")
+    st.markdown("**Example SPL Queries**")
     spl_examples = {
-        "비용 집계": "| stats sum(cost_usd) as total_cost by model",
-        "DLP 위반": "event_type=mcp_dlp_violation | table _time,rule_id,sensitivity,action_taken",
-        "이상탐지": "event_type=mcp_anomaly | table _time,anomaly_type,metric_value",
-        "라우터 결정": "event_type=mcp_router_decision | table _time,query_complexity,selected_model",
+        "Cost Summary": "| stats sum(cost_usd) as total_cost by model",
+        "DLP Violations": "event_type=mcp_dlp_violation | table _time,rule_id,sensitivity,action_taken",
+        "Anomaly Detection": "event_type=mcp_anomaly | table _time,anomaly_type,metric_value",
+        "Router Decisions": "event_type=mcp_router_decision | table _time,query_complexity,selected_model",
     }
     for label, spl in spl_examples.items():
         if st.button(label, key=f"spl_{label}"):
@@ -337,12 +337,12 @@ with tab_events:
             if rows:
                 st.dataframe(rows, use_container_width=True)
             else:
-                st.info("결과 없음")
+                st.info("No results")
 
 # ── Tab 3: Auto-Remediation ───────────────────────────────────────────────────
 with tab_remediation:
     st.subheader("Auto-Remediation Simulator")
-    st.caption("Splunk CDTS 이상탐지 Alert → MCPAgents /splunk/alert → 자동 복구")
+    st.caption("Splunk CDTS Anomaly Alert → MCPAgents /splunk/alert → Auto-Remediation")
 
     scenarios = {
         "💸 Cost Spike": ("cost_spike", 9.2),
@@ -352,7 +352,7 @@ with tab_remediation:
         "📝 Token Overrun": ("token_overrun", 150000),
     }
 
-    st.markdown("#### 시나리오 선택")
+    st.markdown("#### Select Scenario")
     cols = st.columns(len(scenarios))
     for i, (label, (atype, val)) in enumerate(scenarios.items()):
         with cols[i]:
@@ -374,7 +374,7 @@ with tab_remediation:
             handled = resp.get("handled", False)
             skipped = resp.get("skipped", False)
             icon = "✅" if handled else ("⏭️" if skipped else "⚠️")
-            with st.expander(f"{icon} {label} — 결과", expanded=True):
+            with st.expander(f"{icon} {label} — Result", expanded=True):
                 if handled:
                     st.success(f"handled=True | anomaly_value={resp.get('anomaly_value')} ≥ threshold={resp.get('threshold')}")
                     actions = resp.get("actions", [])
@@ -384,15 +384,15 @@ with tab_remediation:
                 elif skipped:
                     st.info(f"⏭️ Skipped (cooldown) — {resp.get('reason', 'cooldown active')}")
                 elif resp.get("error"):
-                    st.error(f"연결 실패 — {resp.get('error')}")
+                    st.error(f"Connection failed — {resp.get('error')}")
                 else:
                     st.warning(f"Not handled — {resp.get('reason', resp)}")
 
     if not any_result:
-        st.info("위 버튼을 눌러 이상 시나리오를 시뮬레이션하세요.")
+        st.info("Click a scenario button above to simulate an anomaly.")
 
     st.divider()
-    st.markdown("#### 커스텀 Alert")
+    st.markdown("#### Custom Alert")
     col_type, col_val, col_fire = st.columns([2, 1, 1])
     with col_type:
         custom_type = st.selectbox("Anomaly Type",
@@ -409,11 +409,11 @@ with tab_remediation:
 # ── Tab 4: DLP / SOAR ────────────────────────────────────────────────────────
 with tab_soar:
     st.subheader("DLP → Foundation-sec → SOAR Pipeline")
-    st.caption("텍스트 입력 → DLP 스캔 → SOAR 플레이북 자동 트리거")
+    st.caption("Text Input → DLP Scan → SOAR Playbook Auto-Trigger")
 
     test_text = st.text_area(
-        "DLP 스캔할 텍스트",
-        value="고객 이름: 홍길동, 주민번호: 900101-1234567, 카드번호: 4111-1111-1111-1111",
+        "Text to scan for PII",
+        value="Customer: John Doe, SSN: 123-45-6789, Card: 4111-1111-1111-1111",
         height=100,
     )
 
@@ -436,26 +436,26 @@ with tab_soar:
                 st.json(resp)
 
         with col_b:
-            st.markdown("**SOAR Playbooks** _(if DLP triggered)_")
+            st.markdown("**SOAR Playbooks** _(triggered on DLP violation)_")
             playbooks = [
-                ("mcp_block_user", "HIGH 위험 사용자 차단"),
-                ("mcp_notify_security", "보안팀 알림"),
-                ("mcp_quarantine_session", "세션 격리"),
-                ("mcp_enrich_ioc", "IOC 분석"),
+                ("mcp_block_user", "Block high-risk user"),
+                ("mcp_notify_security", "Notify security team"),
+                ("mcp_quarantine_session", "Quarantine session"),
+                ("mcp_enrich_ioc", "IOC enrichment & analysis"),
             ]
             for pb, desc in playbooks:
                 st.markdown(f"- **`{pb}`**: {desc}")
 
     st.divider()
     st.markdown("#### Foundation-sec Risk Scoring")
-    st.caption("Splunk Foundation-sec 호스팅 모델이 PII 민감도를 점수화합니다")
+    st.caption("Splunk Foundation-sec hosted model scores PII sensitivity")
 
     col1, col2, col3, col4 = st.columns(4)
     risk_examples = [
-        ("SSN 포함", "HIGH", "#f38ba8"),
-        ("카드번호 포함", "HIGH", "#f38ba8"),
-        ("이메일만", "MEDIUM", "#fab387"),
-        ("일반 텍스트", "LOW", "#a6e3a1"),
+        ("SSN Detected", "HIGH", "#f38ba8"),
+        ("Card Number", "HIGH", "#f38ba8"),
+        ("Email Only", "MEDIUM", "#fab387"),
+        ("Plain Text", "LOW", "#a6e3a1"),
     ]
     for (label, level, color), col in zip(risk_examples, [col1, col2, col3, col4]):
         with col:
