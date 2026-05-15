@@ -175,8 +175,10 @@ with tab_agent:
             else:
                 st.success(f"완료 — {elapsed:.2f}s")
 
-                # Tool results
-                steps = result.get("steps", []) or result.get("result", {}).get("tool_results", [])
+                # Tool results — API returns "steps" as an int count, so pull
+                # the actual tool-call list from result.result.tool_results
+                res_obj = result.get("result", {})
+                steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
                 if steps:
                     st.markdown("**Tool Calls**")
                     for step in steps:
