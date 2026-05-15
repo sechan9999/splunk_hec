@@ -1,11 +1,13 @@
 """
 MCPAgents x Splunk — Hackathon Demo App
 Streamlit all-in-one: Agent Run + Live Events + Auto-Remediation + Health
+Supports DEMO MODE when backend services are unavailable (e.g. Streamlit Cloud).
 """
 import json
 import time
+import random
 import urllib3
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 import streamlit as st
@@ -28,12 +30,77 @@ st.markdown("""
 }
 .status-ok  { color: #a6e3a1; font-weight: bold; }
 .status-err { color: #f38ba8; font-weight: bold; }
+.demo-badge {
+    background: linear-gradient(135deg, #f5a623, #f7c948);
+    color: #1e1e2e; padding: 4px 12px; border-radius: 12px;
+    font-weight: bold; font-size: 0.75em; margin-left: 8px;
+}
 </style>
 """, unsafe_allow_html=True)
+
+# ── Demo data generators ─────────────────────────────────────────────────────
+MODELS = ["gpt-4o", "claude-sonnet-4", "gemini-2.0-flash", "gpt-4o-mini"]
+
+def _demo_health():
+    return {
+        "status": "ok", "version": "2.0.0-splunk",
+        "telemetry": {"sent": random.randint(80, 350), "dropped": random.randint(0, 2)},
+        "remediation": {"remediator": {"remediation_count": random.randint(3, 12),
+                                        "active_cooldowns": {}}},
+    }
+
+def _demo_agent_run(query):
+    model = random.choice(MODELS)
+    return {
+        "success": True, "query": query,
+        "result": {
+            "response": f"[Demo] '{query}' 분석 완료. 최근 1시간 동안 총 $4.23 비용 발생, 평균 레이턴시 320ms, DLP 위반 2건 감지됨.",
+            "model": model, "latency_ms": random.randint(180, 900),
+            "cost_usd": round(random.uniform(0.01, 0.15), 4),
+            "tool_results": [
+                {"tool": "splunk_query", "result": {"spl": f"index=mcp_agents | stats count by model", "rows": 5}},
+                {"tool": "cost_analyzer", "result": {"total_cost": 4.23, "top_model": model}},
+            ],
+        },
+    }
+
+def _demo_events(n=8):
+    rows = []
+    now = datetime.now()
+    etypes = ["mcp_llm_call", "mcp_router_decision", "mcp_tool_call", "mcp_cache_hit", "mcp_dlp_violation"]
+    for i in range(n):
+        t = now - timedelta(seconds=random.randint(10, 600))
+        rows.append({
+            "_time": t.strftime("%Y-%m-%dT%H:%M:%S"),
+            "event_type": random.choice(etypes),
+            "model": random.choice(MODELS),
+            "cost_usd": str(round(random.uniform(0.001, 0.12), 4)),
+            "latency_ms": str(random.randint(80, 1200)),
+        })
+    return sorted(rows, key=lambda r: r["_time"], reverse=True)
+
+def _demo_alert(anomaly_type, value):
+    thresholds = {"cost_spike": 5.0, "latency_spike": 3000, "error_rate_high": 0.15,
+                  "dlp_burst": 10, "token_overrun": 100000}
+    th = thresholds.get(anomaly_type, 5.0)
+    return {
+        "handled": True, "anomaly_type": anomaly_type,
+        "anomaly_value": float(value), "threshold": th,
+        "actions": [
+            {"action": "downgrade_model", "result": "gpt-4o → gpt-4o-mini"},
+            {"action": "enable_cache", "result": "semantic_cache=ON"},
+            {"action": "rate_limit", "result": "max_rpm=30"},
+            {"action": "emit_telemetry", "result": "HEC event sent"},
+        ],
+        "cooldown_sec": 600,
+    }
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("⚙️ Configuration")
+    demo_mode = st.toggle("🎮 Demo Mode", value=True,
+                          help="시뮬레이션 데이터로 UI를 체험합니다. 실제 백엔드 연결 시 끄세요.")
+    st.divider()
     mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
     splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
     splunk_user   = st.text_input("Splunk User", "admin")
@@ -48,42 +115,46 @@ with st.sidebar:
 def _get(url, **kw):
     try:
         return requests.get(url, timeout=5, **kw)
-    except Exception as e:
+    except Exception:
         return None
 
 def _post(url, **kw):
     try:
         return requests.post(url, timeout=30, **kw)
-    except Exception as e:
+    except Exception:
         return None
 
 def health():
+    if demo_mode:
+        return _demo_health()
     r = _get(f"{mcpagents_url}/health")
     return r.json() if r and r.ok else None
 
 def agent_run(query, user_id="demo"):
-    r = _post(f"{mcpagents_url}/agent/run",
-              json={"query": query, "user_id": user_id})
+    if demo_mode:
+        time.sleep(0.5)
+        return _demo_agent_run(query)
+    r = _post(f"{mcpagents_url}/agent/run", json={"query": query, "user_id": user_id})
     return r.json() if r and r.ok else {"error": str(r)}
 
 def fire_alert(anomaly_type, value):
+    if demo_mode:
+        time.sleep(0.3)
+        return _demo_alert(anomaly_type, value)
     r = _post(f"{mcpagents_url}/splunk/alert",
-              json={"result": {"anomaly_type": anomaly_type,
-                               "metric_value": str(value)}})
+              json={"result": {"anomaly_type": anomaly_type, "metric_value": str(value)}})
     return r.json() if r and r.ok else {"error": "connection failed"}
 
 def splunk_search(spl, earliest="-15m", limit=20):
+    if demo_mode:
+        return _demo_events(random.randint(5, 12))
     try:
         r = requests.post(
             f"{splunk_rest}/services/search/jobs/export",
             auth=(splunk_user, splunk_pass),
-            data={
-                "search": f"search index={splunk_index} {spl} | head {limit}",
-                "output_mode": "json",
-                "earliest_time": earliest,
-            },
-            verify=False,
-            timeout=10,
+            data={"search": f"search index={splunk_index} {spl} | head {limit}",
+                  "output_mode": "json", "earliest_time": earliest},
+            verify=False, timeout=10,
         )
         rows = []
         for line in r.text.strip().splitlines():
@@ -96,10 +167,12 @@ def splunk_search(spl, earliest="-15m", limit=20):
             except Exception:
                 pass
         return rows
-    except Exception as e:
+    except Exception:
         return []
 
 def hec_status():
+    if demo_mode:
+        return True
     try:
         r = requests.get(f"{hec_url}/services/collector/health", timeout=3)
         return r.status_code == 200
@@ -107,7 +180,12 @@ def hec_status():
         return False
 
 # ── Header ────────────────────────────────────────────────────────────────────
-st.title("🔥 MCPAgents × Splunk — Agentic Ops Control Center")
+title_col, badge_col = st.columns([6, 1])
+with title_col:
+    st.title("🔥 MCPAgents × Splunk — Agentic Ops Control Center")
+with badge_col:
+    if demo_mode:
+        st.markdown('<span class="demo-badge">🎮 DEMO</span>', unsafe_allow_html=True)
 st.caption("Splunk Agentic Ops Hackathon 2026 | Observability · Security · Platform")
 
 # ── Quick health bar ──────────────────────────────────────────────────────────
@@ -128,8 +206,7 @@ with col2:
 with col3:
     if h:
         tel = h.get("telemetry", {})
-        st.metric("HEC Sent", tel.get("sent", 0),
-                  f"dropped={tel.get('dropped', 0)}")
+        st.metric("HEC Sent", tel.get("sent", 0), f"dropped={tel.get('dropped', 0)}")
     else:
         st.metric("HEC Sent", "—")
 
@@ -145,10 +222,7 @@ st.divider()
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab_agent, tab_events, tab_remediation, tab_soar = st.tabs([
-    "🤖 Agent Run",
-    "📊 Live Splunk Events",
-    "🔧 Auto-Remediation",
-    "🛡️ DLP / SOAR",
+    "🤖 Agent Run", "📊 Live Splunk Events", "🔧 Auto-Remediation", "🛡️ DLP / SOAR",
 ])
 
 # ── Tab 1: Agent Run ──────────────────────────────────────────────────────────
@@ -176,10 +250,11 @@ with tab_agent:
                 st.error(f"Error: {result}")
             else:
                 st.success(f"완료 — {elapsed:.2f}s")
-
-                # Tool results — API returns "steps" as an int count, so pull
-                # the actual tool-call list from result.result.tool_results
                 res_obj = result.get("result", {})
+                # Show response text
+                if isinstance(res_obj, dict) and res_obj.get("response"):
+                    st.info(res_obj["response"])
+                # Tool results
                 steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
                 if steps:
                     st.markdown("**Tool Calls**")
@@ -191,8 +266,6 @@ with tab_agent:
                                 st.json(res)
                             else:
                                 st.code(str(res)[:2000], language="text")
-
-                # Raw response
                 with st.expander("📄 Raw response"):
                     st.json(result)
 
@@ -209,6 +282,8 @@ with tab_agent:
         if cols[i].button(q, key=f"quick_{i}", use_container_width=True):
             with st.spinner("Running..."):
                 r = agent_run(q, "demo")
+            if isinstance(r.get("result", {}), dict) and r["result"].get("response"):
+                st.info(r["result"]["response"])
             st.json(r)
 
 # ── Tab 2: Live Splunk Events ─────────────────────────────────────────────────
@@ -217,7 +292,8 @@ with tab_events:
 
     col_f, col_t, col_btn = st.columns([2, 1, 1])
     with col_f:
-        spl_filter = st.text_input("SPL filter", "| fields event_type,model,cost_usd,latency_ms,_time",
+        spl_filter = st.text_input("SPL filter",
+                                   "| fields event_type,model,cost_usd,latency_ms,_time",
                                    label_visibility="collapsed")
     with col_t:
         earliest = st.selectbox("Range", ["-5m", "-15m", "-1h", "-24h"],
@@ -233,7 +309,6 @@ with tab_events:
             st.info("이벤트 없음 — Splunk에 데이터가 없거나 연결을 확인하세요.")
         else:
             st.success(f"{len(rows)}개 이벤트")
-            # Clean up display fields
             display = []
             for r in rows:
                 display.append({
@@ -244,7 +319,6 @@ with tab_events:
                     "latency_ms": r.get("latency_ms", ""),
                 })
             st.dataframe(display, use_container_width=True)
-
             with st.expander("Raw JSON"):
                 st.json(rows[:5])
 
@@ -291,7 +365,6 @@ with tab_remediation:
 
     st.divider()
 
-    # Show results for fired alerts
     any_result = False
     for label, (atype, _) in scenarios.items():
         key = f"last_alert_{atype}"
@@ -336,7 +409,7 @@ with tab_remediation:
 # ── Tab 4: DLP / SOAR ────────────────────────────────────────────────────────
 with tab_soar:
     st.subheader("DLP → Foundation-sec → SOAR Pipeline")
-    st.caption("텍스트 입력 → DLP 스캔 → SOAR 플레이북 자동 트리거 (시뮬레이션)")
+    st.caption("텍스트 입력 → DLP 스캔 → SOAR 플레이북 자동 트리거")
 
     test_text = st.text_area(
         "DLP 스캔할 텍스트",
@@ -345,7 +418,6 @@ with tab_soar:
     )
 
     if st.button("🛡️ DLP Scan + SOAR", type="primary"):
-        # We call agent/run with the text to trigger DLP scan via AdvancedMCPAgent
         with st.spinner("Scanning..."):
             resp = agent_run(f"analyze this text for PII: {test_text[:200]}", "soar-demo")
 
@@ -354,6 +426,8 @@ with tab_soar:
         with col_a:
             st.markdown("**Agent Response**")
             res_obj = resp.get("result", {})
+            if isinstance(res_obj, dict) and res_obj.get("response"):
+                st.info(res_obj["response"])
             steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
             if steps:
                 for s in steps:
