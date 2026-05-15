@@ -3,12 +3,23 @@
   "lastUpdated": "2026-05-15T12:00:00.000Z",
   "activeFeatures": [
     "splunk-hec-emitter",
-    "splunk-mcp-tool"
+    "splunk-mcp-tool",
+    "splunk-soar-brigde"
   ],
-  "primaryFeature": "splunk-mcp-tool",
+  "primaryFeature": "splunk-soar-brigde",
   "features": {
+    "splunk-soar-brigde": {
+      "phase": "completed",
+      "planCreatedAt": "2026-05-15T13:50:00.000Z",
+      "designCreatedAt": "2026-05-15T13:55:00.000Z",
+      "doStartedAt": "2026-05-15T14:00:00.000Z",
+      "checkAt": "2026-05-15T14:10:00.000Z",
+      "matchRate": 100,
+      "iterationCount": 0,
+      "taskId": 11
+    },
     "splunk-mcp-tool": {
-      "phase": "check",
+      "phase": "completed",
       "planCreatedAt": "2026-05-15T12:40:00.000Z",
       "checkAt": "2026-05-15T13:00:00.000Z",
       "matchRate": 100,

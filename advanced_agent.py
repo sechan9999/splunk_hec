@@ -227,6 +227,10 @@ class AdvancedMCPAgent:
         
         # 실행 이력
         self._execution_history: List[Dict] = []
+
+        # DLP + SOAR lazy init
+        self._dlp = None
+        self._soar = None
     
     def _register_default_tools(self):
         """기본 도구 등록"""
@@ -263,6 +267,16 @@ class AdvancedMCPAgent:
             tel = None
 
         try:
+            if self._dlp is None:
+                from enterprise_mcp_connector.dlp_policy import DLPPolicyEngine
+                from security.soar_bridge import get_soar_bridge, patch_dlp_engine_with_soar
+                self._dlp = DLPPolicyEngine()
+                self._soar = get_soar_bridge()
+                patch_dlp_engine_with_soar(self._dlp, self._soar)
+        except Exception:
+            self._dlp = None
+
+        try:
             # 1. 쿼리 분석
             step1 = await self._analyze_query(query)
             steps.append({"step": "analyze", "result": step1})
@@ -279,6 +293,17 @@ class AdvancedMCPAgent:
                     result = await self._tools[tool_name](query, context)
                     results.append({"tool": tool_name, "result": result})
                     steps.append({"step": f"execute_{tool_name}", "result": result})
+                    try:
+                        if self._dlp:
+                            from enterprise_mcp_connector.dlp_policy import TransferDirection
+                            self._dlp.scan(
+                                result,
+                                TransferDirection.OUTBOUND,
+                                tool_name=tool_name,
+                                user_id=context.user_id,
+                            )
+                    except Exception:
+                        pass
                     try:
                         if tel:
                             tel.emit_tool_call(
