@@ -244,6 +244,7 @@ class AdvancedMCPAgent:
             "remember":      self._tool_remember,
             "recall":        self._tool_recall,
             "splunk_query":  self._tool_splunk_query,
+            "supabase_query": self._tool_supabase_query,
         }
     
     async def execute(self, query: str, context: AgentContext = None) -> AgentResponse:
@@ -386,7 +387,20 @@ class AdvancedMCPAgent:
             "requires_docs": False,
             "requires_code": False,
             "requires_splunk": False,
+            "requires_supabase": False,
         }
+
+        # Supabase 가입자/회원 데이터 의도 (가장 구체적이므로 먼저 확인)
+        supabase_keywords = [
+            "가입", "가입자", "신규 가입", "회원가입", "신규 회원", "신규 사용자",
+            "signup", "sign-up", "sign up", "new user", "new users",
+            "new signup", "new signups", "registration", "registrations",
+            "registered", "supabase",
+        ]
+        if any(w in query_lower for w in supabase_keywords):
+            analysis["intent"] = "supabase_query"
+            analysis["requires_supabase"] = True
+            return analysis
 
         # Splunk 운영 데이터 쿼리 의도 (다른 의도보다 먼저 확인)
         splunk_keywords = [
@@ -427,6 +441,8 @@ class AdvancedMCPAgent:
         """도구 선택"""
         tools = []
 
+        if analysis.get("requires_supabase"):
+            tools.append("supabase_query")
         if analysis.get("requires_splunk"):
             tools.append("splunk_query")
         if analysis.get("requires_docs"):
@@ -571,6 +587,80 @@ def process_data(data):
         except Exception as e:
             return {"error": str(e), "results": [], "summary": "Splunk query failed"}
 
+    async def _tool_supabase_query(self, query: str, context: AgentContext) -> Dict:
+        """Supabase 신규 가입자 조회 도구.
+
+        SUPABASE_URL / SUPABASE_KEY 환경변수가 설정되면 실제 Supabase REST(PostgREST)
+        에서 최근 N일 신규 가입자 수를 집계한다. 미설정 시 데모 값으로 폴백한다.
+        테이블/타임스탬프 컬럼: SUPABASE_SIGNUPS_TABLE(기본 profiles),
+        SUPABASE_SIGNUPS_TS_COL(기본 created_at).
+        """
+        import os
+        import re
+        from datetime import datetime, timedelta
+
+        days = 7
+        m = re.search(r"(\d+)\s*(?:일|day|days)", query.lower())
+        if m:
+            try:
+                days = max(1, min(int(m.group(1)), 365))
+            except ValueError:
+                days = 7
+
+        url   = os.getenv("SUPABASE_URL", "").rstrip("/")
+        key   = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_KEY", "")
+        table = os.getenv("SUPABASE_SIGNUPS_TABLE", "profiles")
+        tscol = os.getenv("SUPABASE_SIGNUPS_TS_COL", "created_at")
+        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+        if not url or not key:
+            import random
+            n = random.randint(80, 260)
+            return {
+                "source": "demo", "metric": "new_signups", "window_days": days,
+                "count": n, "table": table, "ts_column": tscol,
+                "summary": (f"[Demo] Last {days} days: {n} new signups "
+                            f"(SUPABASE_URL/KEY not set — simulated). "
+                            f"Real data: set env vars; aggregates {table}.{tscol}."),
+            }
+
+        try:
+            import requests
+            r = requests.get(
+                f"{url}/rest/v1/{table}",
+                headers={
+                    "apikey": key,
+                    "Authorization": f"Bearer {key}",
+                    "Prefer": "count=exact",
+                    "Range": "0-0",
+                },
+                params={"select": tscol, tscol: f"gte.{since}"},
+                timeout=10,
+            )
+            total = None
+            cr = r.headers.get("content-range", "")
+            if "/" in cr:
+                tail = cr.split("/")[-1]
+                if tail.isdigit():
+                    total = int(tail)
+            if total is None:
+                try:
+                    total = len(r.json())
+                except Exception:
+                    total = 0
+            return {
+                "source": "supabase", "metric": "new_signups", "window_days": days,
+                "count": total, "table": table, "ts_column": tscol, "since": since,
+                "summary": f"Last {days} days: {total} new signups "
+                           f"(Supabase {table}.{tscol}).",
+            }
+        except Exception as e:
+            return {
+                "source": "error", "metric": "new_signups", "window_days": days,
+                "count": None, "error": str(e),
+                "summary": f"Supabase query failed: {e}",
+            }
+
     def _synthesize_results(self, query: str, results: List[Dict]) -> Dict:
         """결과 통합"""
         synthesized = {
@@ -591,7 +681,14 @@ def process_data(data):
             if "docs" in r.get("result", {}):
                 synthesized["documentation"] = r["result"]["docs"]
                 break
-        
+
+        # 가입자 등 요약 답변이 있으면 상단 응답으로 노출
+        for r in results:
+            res = r.get("result", {})
+            if isinstance(res, dict) and res.get("metric") == "new_signups":
+                synthesized["response"] = res.get("summary", "")
+                break
+
         return synthesized
     
     def get_execution_history(self, limit: int = 10) -> List[Dict]:

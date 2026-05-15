@@ -49,7 +49,45 @@ def _demo_health():
                                         "active_cooldowns": {}}},
     }
 
+_SIGNUP_KEYWORDS = [
+    "가입", "가입자", "신규 가입", "회원가입", "신규 회원", "신규 사용자",
+    "signup", "sign-up", "sign up", "new user", "new users",
+    "new signup", "new signups", "registration", "registrations", "registered",
+]
+
+def _is_signup_query(q):
+    ql = (q or "").lower()
+    return any(k in ql for k in _SIGNUP_KEYWORDS)
+
+def _demo_supabase(query):
+    import re
+    days = 7
+    m = re.search(r"(\d+)\s*(?:일|day|days)", (query or "").lower())
+    if m:
+        days = max(1, min(int(m.group(1)), 365))
+    n = random.randint(90, 240)
+    prev = random.randint(70, 230)
+    delta = round((n - prev) / max(prev, 1) * 100, 1)
+    return {
+        "success": True, "query": query,
+        "result": {
+            "response": (f"[Demo] Last {days} days: {n} new signups "
+                         f"({'+' if delta >= 0 else ''}{delta}% vs previous {days}d). "
+                         f"Source: Supabase profiles.created_at (simulated)."),
+            "model": "supabase-mcp",
+            "tool_results": [
+                {"tool": "supabase_query", "result": {
+                    "source": "demo", "metric": "new_signups",
+                    "window_days": days, "count": n,
+                    "prev_period": prev, "change_pct": delta,
+                    "table": "profiles", "ts_column": "created_at"}},
+            ],
+        },
+    }
+
 def _demo_agent_run(query):
+    if _is_signup_query(query):
+        return _demo_supabase(query)
     model = random.choice(MODELS)
     return {
         "success": True, "query": query,
@@ -276,6 +314,7 @@ with tab_agent:
         "Show recent DLP violations",
         "Model with highest error rate today?",
         "Cache hit rate statistics",
+        "지난 7일 신규 가입자 수 알려줘",
     ]
     cols = st.columns(len(quick))
     for i, q in enumerate(quick):
