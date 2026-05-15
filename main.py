@@ -45,6 +45,15 @@ def initialize_splunk_integration():
     handler = get_anomaly_handler()
     logger.info(f"④ Auto-Remediation: ready ({len(handler._policies)} policies)")
 
+    # IntelligentRouter 연결 (가중치 동적 조정 활성화)
+    try:
+        from multi_llm_platform.intelligent_router import IntelligentRouter
+        router = IntelligentRouter()
+        handler.set_router(router)
+        logger.info("  Router → AnomalyHandler connected")
+    except Exception as e:
+        logger.warning(f"  Router connection skipped: {e}")
+
     # DLP Engine에 SOAR 패치
     try:
         from enterprise_mcp_connector.dlp_policy import DLPPolicyEngine

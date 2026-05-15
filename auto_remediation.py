@@ -86,6 +86,13 @@ DEFAULT_POLICIES: List[RemediationPolicy] = [
                              "emit_telemetry"],
         cooldown_sec      = 1800,
     ),
+    RemediationPolicy(
+        anomaly_type      = AnomalyType.TOKEN_OVERRUN,
+        trigger_threshold = 100000,  # 토큰/시간
+        actions           = ["reduce_max_tokens", "enable_aggressive_caching",
+                             "emit_telemetry"],
+        cooldown_sec      = 600,
+    ),
 ]
 
 
