@@ -2,10 +2,9 @@
   "version": "2.0",
   "lastUpdated": "2026-05-15T17:05:00.000Z",
   "activeFeatures": [
-    "splunk-hec-emitter",
-    "splunk-mcp-tool"
+    "splunk-hec-emitter"
   ],
-  "primaryFeature": "splunk-mcp-tool",
+  "primaryFeature": "splunk-hec-emitter",
   "features": {
     "splunk-auto-remediation": {
       "phase": "archived",
@@ -24,12 +23,12 @@
       "archivedTo": "docs/archive/2026-05/splunk-soar-brigde/"
     },
     "splunk-mcp-tool": {
-      "phase": "completed",
-      "planCreatedAt": "2026-05-15T12:40:00.000Z",
-      "checkAt": "2026-05-15T13:00:00.000Z",
+      "phase": "archived",
       "matchRate": 100,
       "iterationCount": 0,
-      "taskId": 6
+      "startedAt": "2026-05-15T12:40:00.000Z",
+      "archivedAt": "2026-05-15T17:10:00.000Z",
+      "archivedTo": "docs/archive/2026-05/splunk-mcp-tool/"
     },
     "splunk-hec-emitter": {
       "phase": "completed",
