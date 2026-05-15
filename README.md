@@ -17,21 +17,28 @@ MCPAgents                    Splunk Platform
 ⑤ Dashboard      ◀──SPL──  Splunk Live Panels
 ```
 
-## 📦 새로 추가된 파일 (Original은 100% 유지)
+## 📦 변경 파일 목록
+
+### 새로 추가된 파일
 
 | 파일 | 주차 | 설명 |
 |------|------|------|
 | `splunk_telemetry.py` | Week 1 | Splunk HEC 텔레메트리 에미터 (비동기 배치) |
 | `tools/splunk_mcp_tool.py` | Week 2 | Splunk MCP Server Tool connector + NL→SPL |
 | `security/soar_bridge.py` | Week 3 | DLP → Foundation-sec → SOAR 자동 플레이북 |
+| `security/__init__.py` | Week 3 | SOARBridge export |
 | `auto_remediation.py` | Week 4 | CDTS 이상탐지 → Router 자동 복구 루프 |
-| `multi_llm_platform/observability.py` | Week 4 | SplunkBackend 추가 (기존 API 호환) |
-| `enterprise_mcp_connector/audit_logger.py` | Week 4 | HEC 싱크 추가 |
-| `splunk_app/` | Week 4 | Splunk Enterprise App 패키지 |
-| `splunk_app/default/savedsearches.conf` | Week 4 | SPL 이상탐지 알림 (CDTS) |
-| `splunk_app/bin/mcp_agents_input.py` | Week 4 | Modular Input (splunk-app-examples 패턴) |
-| `dashboard.html` | Week 4 | Splunk 섹션 3개 추가 |
-| `main.py` | Week 4 | FastAPI 통합 엔트리포인트 |
+| `splunk_app/` | — | Splunk Enterprise App 패키지 (savedsearches, Modular Input) |
+| `main.py` | — | FastAPI 통합 엔트리포인트 (모든 모듈 초기화) |
+
+### 수정된 파일 (graceful degradation 패턴 — 기존 기능 100% 보장)
+
+| 파일 | 주차 | 변경 내용 |
+|------|------|----------|
+| `multi_llm_platform/llm_router.py` | Week 1 | `emit_router_decision`, `emit_cache_hit/miss` 추가 |
+| `multi_llm_platform/semantic_cache.py` | Week 1 | `emit_cache_hit/miss` 추가 |
+| `advanced_agent.py` | Week 2·3·4 | `splunk_query` 도구 등록, DLP scan 연결, HEC 텔레메트리 훅 |
+| `enterprise_mcp_connector/tool_manager.py` | Week 2 | `SplunkPlugin` 클래스 + `PLUGIN_REGISTRY["splunk"]` |
 
 ## 🚀 빠른 시작
 
@@ -49,8 +56,9 @@ cp .env.example .env
 ### 3. Docker Compose (Splunk + MCPAgents + Redis)
 ```bash
 docker-compose up
-# Splunk Web: http://localhost:8000 (admin/mcpagents2026)
-# MCPAgents:  http://localhost:8001
+# Splunk Web:  http://localhost:8000  (admin/mcpagents2026)
+# MCPAgents:   http://localhost:8001  (8001→컨테이너 내부 8000)
+# Redis:       localhost:6379
 ```
 
 ### 4. 텔레메트리 테스트
@@ -61,12 +69,14 @@ python security/soar_bridge.py    # DLP→SOAR 테스트
 python auto_remediation.py        # 자동 복구 테스트
 ```
 
-### 5. 서버 실행
+### 5. 서버 실행 (단독 실행 — Docker 없이)
 ```bash
 python main.py --server
 # → http://localhost:8000/health
-# → http://localhost:8000/docs (Swagger UI)
-# → http://localhost:8000/splunk/alert (webhook)
+# → http://localhost:8000/docs        (Swagger UI)
+# → http://localhost:8000/splunk/alert (Splunk Alert webhook)
+# → http://localhost:8000/agent/run   (에이전트 API)
+# ※ Docker Compose 사용 시 MCPAgents는 http://localhost:8001
 ```
 
 ## 🏗️ 아키텍처
