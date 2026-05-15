@@ -131,13 +131,23 @@ with st.sidebar:
     demo_mode = st.toggle("🎮 Demo Mode", value=True,
                           help="Run with simulated data. Turn off to connect to real backends.")
     st.divider()
-    mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
-    splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
-    splunk_user   = st.text_input("Splunk User", "admin")
-    splunk_pass   = st.text_input("Splunk Password", "mcpagents2026", type="password")
-    hec_url       = st.text_input("HEC URL", "http://localhost:8088")
-    hec_token     = st.text_input("HEC Token", "", type="password")
-    splunk_index  = st.text_input("Splunk Index", "mcp_agents")
+    if demo_mode:
+        st.caption("🎮 Demo Mode — backend & credentials not used (simulated data).")
+        mcpagents_url = "http://localhost:8001"
+        splunk_rest   = "https://localhost:8089"
+        splunk_user   = ""
+        splunk_pass   = ""
+        hec_url       = "http://localhost:8088"
+        hec_token     = ""
+        splunk_index  = "mcp_agents"
+    else:
+        mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
+        splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
+        splunk_user   = st.text_input("Splunk User", "")
+        splunk_pass   = st.text_input("Splunk Password", "", type="password")
+        hec_url       = st.text_input("HEC URL", "http://localhost:8088")
+        hec_token     = st.text_input("HEC Token", "", type="password")
+        splunk_index  = st.text_input("Splunk Index", "mcp_agents")
     st.divider()
     auto_refresh  = st.toggle("Auto-refresh (5s)", value=False)
 
