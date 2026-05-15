@@ -1,0 +1,9 @@
+model,input_cost_per_1k,output_cost_per_1k,provider,tier
+claude-3-opus*,0.015,0.075,anthropic,premium
+claude-3.5-sonnet*,0.003,0.015,anthropic,standard
+claude-3-haiku*,0.00025,0.00125,anthropic,economy
+gpt-4o*,0.005,0.015,openai,standard
+gpt-4o-mini*,0.00015,0.0006,openai,economy
+gpt-3.5-turbo*,0.0005,0.0015,openai,economy
+gemini-1.5-pro*,0.0035,0.0105,google,standard
+gemini-1.5-flash*,0.00035,0.00105,google,economy

@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  # ── Splunk Enterprise (local dev) ──────────────────────────────────────
+  splunk:
+    image: splunk/splunk:latest
+    platform: linux/amd64
+    container_name: mcpagents-splunk
+    environment:
+      SPLUNK_START_ARGS: "--accept-license"
+      SPLUNK_PASSWORD: "mcpagents2026"
+      SPLUNK_APPS_URL: ""
+    ports:
+      - "8000:8000"    # Splunk Web UI
+      - "8088:8088"    # HEC endpoint
+      - "8089:8089"    # REST API
+    volumes:
+      - splunk_data:/opt/splunk/var
+      - ./splunk_app:/opt/splunk/etc/apps/mcpagents_splunk
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/en-US/account/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── MCPAgents API Server ───────────────────────────────────────────────
+  mcpagents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcpagents-api
+    environment:
+      - SPLUNK_HEC_URL=http://splunk:8088
+      - SPLUNK_HEC_TOKEN=${SPLUNK_HEC_TOKEN}
+      - SPLUNK_HEC_INDEX=mcp_agents
+      - SPLUNK_API_URL=https://splunk:8089
+      - SPLUNK_API_TOKEN=${SPLUNK_API_TOKEN}
+      - SPLUNK_SOAR_URL=${SPLUNK_SOAR_URL}
+      - SPLUNK_SOAR_TOKEN=${SPLUNK_SOAR_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8001:8000"
+    depends_on:
+      splunk:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - .:/app
+
+  # ── Redis (Semantic Cache) ─────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: mcpagents-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # ── Splunk HEC Setup (one-shot) ────────────────────────────────────────
+  splunk-setup:
+    image: curlimages/curl:latest
+    container_name: mcpagents-splunk-setup
+    depends_on:
+      splunk:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo 'Creating HEC token...' &&
+        curl -sk -u admin:mcpagents2026 \
+          https://splunk:8089/services/data/inputs/http \
+          -d name=mcpagents_hec \
+          -d index=mcp_agents \
+          -d sourcetype=mcp:agent:event &&
+        echo 'Creating mcp_agents index...' &&
+        curl -sk -u admin:mcpagents2026 \
+          https://splunk:8089/services/data/indexes \
+          -d name=mcp_agents &&
+        echo 'Splunk setup complete'
+      "
+    restart: "no"
+
+volumes:
+  splunk_data:
+  redis_data:

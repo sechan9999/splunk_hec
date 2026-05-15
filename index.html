@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCP Agents - Enterprise AI Control Center</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    :root {
+      --page: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #eef2f7;
+      --ink: #14213d;
+      --muted: #617085;
+      --line: #d8e0ea;
+      --nav: #101828;
+      --nav-soft: #1d2939;
+      --accent: #0f766e;
+      --accent-2: #2563eb;
+      --success: #168a4a;
+      --warning: #b45309;
+      --danger: #dc2626;
+      --violet: #6d28d9;
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      background: var(--page);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 268px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: var(--nav);
+      color: #f8fafc;
+      padding: 24px 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 18px;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(15, 118, 110, 0.95)),
+        #0f766e;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .brand-title {
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .brand-subtitle {
+      font-size: 0.74rem;
+      color: #98a2b3;
+      margin-top: 3px;
+    }
+
+    .nav-section {
+      color: #98a2b3;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 22px 8px 8px;
+    }
+
+    .nav-button {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #d0d5dd;
+      background: transparent;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+
+    .nav-button:hover,
+    .nav-button.active {
+      background: var(--nav-soft);
+      color: #ffffff;
+    }
+
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .sidebar-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 24px;
+    }
+
+    .sidebar-card strong {
+      display: block;
+      font-size: 0.86rem;
+      margin-bottom: 8px;
+    }
+
+    .sidebar-card p {
+      color: #cbd5e1;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 28px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 2.5vw, 2.45rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .topbar p {
+      max-width: 780px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.98rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      min-height: 42px;
+    }
+
+    .btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn:hover {
+      filter: brightness(0.98);
+    }
+
+    .export-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .export-group .btn {
+      min-width: 74px;
+      padding-inline: 12px;
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-item {
+      background: var(--surface);
+      padding: 14px 16px;
+      min-width: 0;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .status-value {
+      margin-top: 6px;
+      font-size: 0.96rem;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: #e6f6f2;
+      color: #0f766e;
+      white-space: nowrap;
+    }
+
+    .pill.warning {
+      background: #fff4df;
+      color: #92400e;
+    }
+
+    .pill.danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .metric-card {
+      min-height: 152px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .metric-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 0.78rem;
+      font-weight: 900;
+      color: #ffffff;
+      background: var(--accent-2);
+    }
+
+    .metric-icon.security {
+      background: var(--danger);
+    }
+
+    .metric-icon.cost {
+      background: var(--success);
+    }
+
+    .metric-icon.audit {
+      background: var(--violet);
+    }
+
+    .metric-icon.cache {
+      background: var(--warning);
+    }
+
+    .metric-value {
+      margin-top: 14px;
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    .metric-note {
+      color: var(--muted);
+      font-size: 0.84rem;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    .trend {
+      color: var(--success);
+      font-size: 0.82rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .trend.danger {
+      color: var(--danger);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin: 22px 0 12px;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-size: 1.02rem;
+    }
+
+    .section-header span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .chart-box {
+      height: 286px;
+      position: relative;
+    }
+
+    .traffic-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .traffic-table th {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: left;
+      padding: 0 10px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .traffic-table td {
+      padding: 13px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    .traffic-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .model-badge {
+      display: inline-flex;
+      align-items: center;
+      min-width: 96px;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 8px;
+      color: var(--ink);
+      background: var(--surface-2);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .amount {
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+    }
+
+    .progress {
+      height: 9px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .policy-list,
+    .dept-list,
+    .event-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .policy-row,
+    .dept-row,
+    .event-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+    }
+
+    .policy-row strong,
+    .dept-row strong,
+    .event-row strong {
+      display: block;
+      font-size: 0.92rem;
+    }
+
+    .subtext {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .gate-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 16px;
+    }
+
+    .prompt-card textarea {
+      width: 100%;
+      min-height: 150px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--ink);
+      background: #fbfdff;
+      line-height: 1.45;
+    }
+
+    .decision {
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .decision.blocked {
+      border-color: #fecaca;
+      background: #fff6f6;
+    }
+
+    .decision.allowed {
+      border-color: #bbf7d0;
+      background: #f5fff8;
+    }
+
+    .route-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .route-step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfdff;
+    }
+
+    .route-step header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      margin-top: 20px;
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 1180px) {
+      .grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .status-strip,
+      .gate-panel {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .main {
+        padding: 20px;
+      }
+
+      .topbar {
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      .grid-4,
+      .grid-3,
+      .grid-2,
+      .status-strip,
+      .gate-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .traffic-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <div class="brand-title">MCP Agents</div>
+          <div class="brand-subtitle">Enterprise AI Gateway</div>
+        </div>
+      </div>
+
+      <div class="nav-section">Control Center</div>
+      <button class="nav-button active" data-page="overview">
+        <span class="nav-icon">OV</span> Executive Overview
+      </button>
+      <button class="nav-button" data-page="guard">
+        <span class="nav-icon">DG</span> Data Guard
+      </button>
+      <button class="nav-button" data-page="cost">
+        <span class="nav-icon">CM</span> Cost Monitor
+      </button>
+      <button class="nav-button" data-page="trace">
+        <span class="nav-icon">TR</span> Trace Explorer
+      </button>
+
+      <div class="nav-section">System</div>
+      <button class="nav-button" data-page="routing">
+        <span class="nav-icon">RT</span> Routing Policy
+      </button>
+      <button class="nav-button" data-page="connectors">
+        <span class="nav-icon">CX</span> Connectors
+      </button>
+
+      <div class="sidebar-card">
+        <strong>Risk posture</strong>
+        <p>Live traffic is routed through DLP, policy checks, semantic cache, model selection, and full audit logging before a response reaches employees.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">Secure Enterprise AI Operations</div>
+          <h1>One control plane for every prompt, model, tool call, and dollar.</h1>
+          <p>MCP Agents gives IT and finance teams a governed AI gateway: sensitive data is blocked before it leaves the company, model spend is optimized in real time, and every request is traceable.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="simulateSpike">Simulate Spike</button>
+          <div class="export-group" aria-label="Export audit report">
+            <button class="btn" id="exportJson">JSON</button>
+            <button class="btn primary" id="exportPdf">PDF</button>
+            <button class="btn primary" id="exportDocx">DOCX</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="status-strip" aria-label="System status">
+        <div class="status-item">
+          <div class="label">Gateway Status</div>
+          <div class="status-value"><span class="pill"><span class="dot"></span> Enforcing policy</span></div>
+        </div>
+        <div class="status-item">
+          <div class="label">AI Apps Observed</div>
+          <div class="status-value">ChatGPT, Claude, Gemini, internal MCP tools</div>
+        </div>
+        <div class="status-item">
+          <div class="label">Deployment</div>
+          <div class="status-value">SOC2-ready audit mode</div>
+        </div>
+        <div class="status-item">
+          <div class="label">Updated</div>
+          <div class="status-value" id="lastUpdated">Live</div>
+        </div>
+      </section>
+
+      <section id="page-overview" class="page active">
+        <div class="grid grid-4">
+          <article class="card metric-card">
+            <div class="metric-top">
+              <div class="label">Security Blocks Today</div>
+              <div class="metric-icon security">DG</div>
+            </div>
+            <div>
+              <div class="metric-value" id="securityBlocks">47</div>
+              <div class="metric-note">PII, API keys, payroll data, and customer records stopped before model egress.</div>
+            </div>
+            <div class="trend danger">+18 high-risk prompts</div>
+          </article>
+
+          <article class="card metric-card">
+            <div class="metric-top">
+              <div class="label">Monthly Savings</div>
+              <div class="metric-icon cost">CM</div>
+            </div>
+            <div>
+              <div class="metric-value" id="monthlySavings">$18.4k</div>
+              <div class="metric-note">Saved through semantic cache hits, model routing, and duplicate-request suppression.</div>
+            </div>
+            <div class="trend">60% below unmanaged baseline</div>
+          </article>
+
+          <article class="card metric-card">
+            <div class="metric-top">
+              <div class="label">Trace Coverage</div>
+              <div class="metric-icon audit">TR</div>
+            </div>
+            <div>
+              <div class="metric-value">100%</div>
+              <div class="metric-note">Prompt, response, model, user, department, token cost, and policy outcome captured.</div>
+            </div>
+            <div class="trend">12,884 spans indexed</div>
+          </article>
+
+          <article class="card metric-card">
+            <div class="metric-top">
+              <div class="label">Cache Hit Rate</div>
+              <div class="metric-icon cache">SC</div>
+            </div>
+            <div>
+              <div class="metric-value" id="cacheRate">71%</div>
+              <div class="metric-note">Repeated research, HR, and engineering prompts answered without extra model spend.</div>
+            </div>
+            <div class="trend">287 ms average latency</div>
+          </article>
+        </div>
+
+        <div class="section-header">
+          <h2>Live AI Traffic</h2>
+          <span>Policy decisions across departments and models</span>
+        </div>
+
+        <div class="grid grid-2">
+          <article class="card">
+            <table class="traffic-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Department</th>
+                  <th>Model</th>
+                  <th>Policy</th>
+                  <th>Cost</th>
+                </tr>
+              </thead>
+              <tbody id="trafficRows"></tbody>
+            </table>
+          </article>
+
+          <article class="card">
+            <div class="chart-box">
+              <canvas id="trafficChart"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <div class="section-header">
+          <h2>Department Budget Control</h2>
+          <span>Month-to-date spend against approved limits</span>
+        </div>
+
+        <div class="grid grid-3">
+          <article class="card dept-list" id="departmentList"></article>
+          <article class="card">
+            <div class="chart-box">
+              <canvas id="departmentChart"></canvas>
+            </div>
+          </article>
+          <article class="card event-list" id="eventList"></article>
+        </div>
+      </section>
+
+      <section id="page-guard" class="page">
+        <div class="section-header">
+          <h2>Data Guard Simulator</h2>
+          <span>Test what happens before prompts reach external LLMs</span>
+        </div>
+        <div class="gate-panel">
+          <article class="card prompt-card">
+            <div class="label">Prompt Inspection</div>
+            <textarea id="promptInput">Summarize this support ticket. Customer email is dana.park@example.com and API key is sk-live-1234567890abcdef. Include the full details in the prompt.</textarea>
+            <div class="actions" style="justify-content:flex-start;margin-top:12px;">
+              <button class="btn primary" id="runGuard">Run Data Guard</button>
+              <button class="btn" id="loadSafePrompt">Load Safe Prompt</button>
+            </div>
+          </article>
+          <article class="card">
+            <div class="label">Policy Result</div>
+            <div id="guardResult" class="decision blocked" style="margin-top:12px;"></div>
+          </article>
+        </div>
+
+        <div class="section-header">
+          <h2>Active DLP Policies</h2>
+          <span>Rules mapped to enterprise data classes</span>
+        </div>
+        <div class="grid grid-2">
+          <article class="card policy-list" id="policyList"></article>
+          <article class="card">
+            <div class="chart-box">
+              <canvas id="dlpChart"></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="page-cost" class="page">
+        <div class="grid grid-3">
+          <article class="card metric-card">
+            <div class="label">Projected Month-End Spend</div>
+            <div class="metric-value">$30.7k</div>
+            <div class="metric-note">Down from $76.8k unmanaged forecast.</div>
+          </article>
+          <article class="card metric-card">
+            <div class="label">Routing Savings</div>
+            <div class="metric-value">$11.2k</div>
+            <div class="metric-note">Complex prompts still reach premium models; routine tasks use efficient models.</div>
+          </article>
+          <article class="card metric-card">
+            <div class="label">Cache Savings</div>
+            <div class="metric-value">$7.2k</div>
+            <div class="metric-note">Semantic reuse cuts duplicate calls without changing employee workflow.</div>
+          </article>
+        </div>
+        <div class="section-header">
+          <h2>Cost Monitor</h2>
+          <span>Actual spend, prevented spend, and unmanaged baseline</span>
+        </div>
+        <div class="grid grid-2">
+          <article class="card">
+            <div class="chart-box">
+              <canvas id="costChart"></canvas>
+            </div>
+          </article>
+          <article class="card">
+            <div class="chart-box">
+              <canvas id="modelChart"></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="page-trace" class="page">
+        <div class="section-header">
+          <h2>Trace Explorer</h2>
+          <span>Every request is explainable after the fact</span>
+        </div>
+        <article class="card event-list" id="traceList"></article>
+      </section>
+
+      <section id="page-routing" class="page">
+        <div class="section-header">
+          <h2>Routing Policy</h2>
+          <span>Quality, cost, latency, and data sensitivity decide the model</span>
+        </div>
+        <div class="grid grid-2">
+          <article class="card route-stack" id="routeList"></article>
+          <article class="card">
+            <div class="chart-box">
+              <canvas id="routingChart"></canvas>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="page-connectors" class="page">
+        <div class="section-header">
+          <h2>Connector Governance</h2>
+          <span>Tool access is scoped, logged, and revocable</span>
+        </div>
+        <div class="grid grid-3" id="connectorList"></div>
+      </section>
+
+      <div class="footer-note">Demo data is static and designed for product validation conversations. Connect live gateway logs to turn this into an operational console.</div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      securityBlocks: 47,
+      monthlySavings: 18400,
+      cacheRate: 71,
+      traffic: [
+        { user: "mina.kim", dept: "Engineering", model: "GPT-4o mini", policy: "Allowed", cost: 0.018 },
+        { user: "jun.lee", dept: "Finance", model: "Claude Sonnet", policy: "Masked", cost: 0.042 },
+        { user: "sarah.cho", dept: "HR", model: "Gemini Flash", policy: "Cache hit", cost: 0.000 },
+        { user: "daniel.park", dept: "Sales", model: "Blocked", policy: "PII blocked", cost: 0.000 },
+        { user: "alex.han", dept: "Marketing", model: "GPT-4o", policy: "Approved", cost: 0.087 }
+      ]
+    };
+
+    const departments = [
+      { name: "Engineering", spend: 12840, budget: 18000 },
+      { name: "Marketing", spend: 7420, budget: 12000 },
+      { name: "Sales", spend: 5360, budget: 9000 },
+      { name: "HR", spend: 2140, budget: 5000 }
+    ];
+
+    const policies = [
+      { name: "PII and customer record detection", status: "Enforced", hits: 19 },
+      { name: "API key and credential detection", status: "Enforced", hits: 11 },
+      { name: "Finance and payroll data masking", status: "Review", hits: 7 },
+      { name: "Source code exfiltration guard", status: "Enforced", hits: 10 }
+    ];
+
+    const events = [
+      { title: "API key blocked", detail: "Engineering prompt stopped before external model call.", tone: "danger" },
+      { title: "Semantic cache hit", detail: "HR onboarding summary reused with 94% match.", tone: "success" },
+      { title: "Premium model approved", detail: "Legal analysis routed to Claude Sonnet with audit note.", tone: "warning" },
+      { title: "Budget threshold warning", detail: "Marketing reached 62% of monthly AI budget.", tone: "warning" }
+    ];
+
+    const traces = [
+      { id: "TRC-8842", title: "Prompt received", detail: "User, department, application, and sensitivity context attached." },
+      { id: "TRC-8843", title: "DLP scan completed", detail: "Email and token-like credential detected; masking policy applied." },
+      { id: "TRC-8844", title: "Route selected", detail: "Routine summarization sent to GPT-4o mini after policy approval." },
+      { id: "TRC-8845", title: "Cost logged", detail: "$0.018 actual spend recorded against Engineering monthly budget." }
+    ];
+
+    const routes = [
+      { title: "Low-risk routine work", model: "GPT-4o mini", detail: "Default path for summaries, rewrites, and small coding tasks." },
+      { title: "High-context reasoning", model: "Claude Sonnet", detail: "Approved for legal, strategy, architecture, and complex analysis." },
+      { title: "Fast repeated requests", model: "Semantic cache", detail: "Answers reused when similarity and freshness thresholds pass." },
+      { title: "Sensitive data", model: "Blocked or masked", detail: "PII, credentials, and restricted data never leave the gateway raw." }
+    ];
+
+    const connectors = [
+      { name: "Google Drive", scope: "Read selected folders", status: "Active", calls: 1240 },
+      { name: "GitHub", scope: "Repo read, PR comment", status: "Active", calls: 718 },
+      { name: "Slack", scope: "Channel summaries", status: "Active", calls: 532 },
+      { name: "Postgres", scope: "Read-only analytics", status: "Restricted", calls: 184 },
+      { name: "Email", scope: "Draft only", status: "Paused", calls: 0 },
+      { name: "Web Search", scope: "Public web", status: "Active", calls: 908 }
+    ];
+
+    const charts = {};
+
+    function formatMoney(value) {
+      if (value >= 1000) return "$" + (value / 1000).toFixed(1) + "k";
+      return "$" + value.toFixed(2);
+    }
+
+    function renderTraffic() {
+      document.getElementById("trafficRows").innerHTML = state.traffic.map((item) => {
+        const policyClass = item.policy.includes("blocked") || item.model === "Blocked" ? "danger" : item.policy.includes("Masked") ? "warning" : "";
+        return `
+          <tr>
+            <td>${item.user}</td>
+            <td>${item.dept}</td>
+            <td><span class="model-badge">${item.model}</span></td>
+            <td><span class="pill ${policyClass}"><span class="dot"></span>${item.policy}</span></td>
+            <td class="amount">${formatMoney(item.cost)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderDepartments() {
+      document.getElementById("departmentList").innerHTML = departments.map((dept) => {
+        const pct = Math.round((dept.spend / dept.budget) * 100);
+        return `
+          <div class="dept-row">
+            <div>
+              <strong>${dept.name}</strong>
+              <div class="subtext">${formatMoney(dept.spend)} of ${formatMoney(dept.budget)} used</div>
+              <div class="progress" style="margin-top:9px;"><div class="bar" style="width:${pct}%;"></div></div>
+            </div>
+            <span class="amount">${pct}%</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderEvents() {
+      document.getElementById("eventList").innerHTML = events.map((event) => `
+        <div class="event-row">
+          <div>
+            <strong>${event.title}</strong>
+            <div class="subtext">${event.detail}</div>
+          </div>
+          <span class="pill ${event.tone === "danger" ? "danger" : event.tone === "warning" ? "warning" : ""}">
+            <span class="dot"></span>${event.tone}
+          </span>
+        </div>
+      `).join("");
+    }
+
+    function renderPolicies() {
+      document.getElementById("policyList").innerHTML = policies.map((policy) => `
+        <div class="policy-row">
+          <div>
+            <strong>${policy.name}</strong>
+            <div class="subtext">${policy.hits} matches in the last 24 hours</div>
+          </div>
+          <span class="pill ${policy.status === "Review" ? "warning" : ""}"><span class="dot"></span>${policy.status}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderTraceList() {
+      document.getElementById("traceList").innerHTML = traces.map((trace) => `
+        <div class="event-row">
+          <div>
+            <strong>${trace.id} - ${trace.title}</strong>
+            <div class="subtext">${trace.detail}</div>
+          </div>
+          <span class="model-badge">logged</span>
+        </div>
+      `).join("");
+    }
+
+    function renderRoutes() {
+      document.getElementById("routeList").innerHTML = routes.map((route) => `
+        <div class="route-step">
+          <header>
+            <strong>${route.title}</strong>
+            <span class="model-badge">${route.model}</span>
+          </header>
+          <div class="subtext">${route.detail}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderConnectors() {
+      document.getElementById("connectorList").innerHTML = connectors.map((connector) => `
+        <article class="card metric-card">
+          <div class="metric-top">
+            <div>
+              <div class="label">${connector.status}</div>
+              <div class="metric-value" style="font-size:1.35rem;">${connector.name}</div>
+            </div>
+            <div class="metric-icon">${connector.name.slice(0, 2).toUpperCase()}</div>
+          </div>
+          <div class="metric-note">${connector.scope}</div>
+          <div class="trend">${connector.calls.toLocaleString()} calls logged</div>
+        </article>
+      `).join("");
+    }
+
+    function runGuard() {
+      const prompt = document.getElementById("promptInput").value;
+      const findings = [];
+      if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(prompt)) findings.push("Email address");
+      if (/(sk|pk|api)[-_][a-z0-9]{10,}/i.test(prompt)) findings.push("Credential-like token");
+      if (/\b\d{3}-\d{2}-\d{4}\b/.test(prompt)) findings.push("SSN pattern");
+      if (/\b(?:\d[ -]*?){13,16}\b/.test(prompt)) findings.push("Payment card pattern");
+
+      const result = document.getElementById("guardResult");
+      if (findings.length) {
+        result.className = "decision blocked";
+        result.innerHTML = `
+          <span class="pill danger"><span class="dot"></span>Blocked before egress</span>
+          <h3 style="margin:14px 0 8px;">${findings.length} sensitive data class detected</h3>
+          <div class="subtext">${findings.join(", ")}. The request would be blocked or masked before any external model call.</div>
+        `;
+      } else {
+        result.className = "decision allowed";
+        result.innerHTML = `
+          <span class="pill"><span class="dot"></span>Allowed with audit log</span>
+          <h3 style="margin:14px 0 8px;">No restricted data found</h3>
+          <div class="subtext">The gateway can route this request based on cost, latency, and quality policy.</div>
+        `;
+      }
+    }
+
+    function buildCharts() {
+      const common = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#617085", boxWidth: 12, usePointStyle: true } }
+        },
+        scales: {
+          x: { ticks: { color: "#617085" }, grid: { color: "#eef2f7" } },
+          y: { ticks: { color: "#617085" }, grid: { color: "#eef2f7" } }
+        }
+      };
+
+      charts.traffic = new Chart(document.getElementById("trafficChart"), {
+        type: "line",
+        data: {
+          labels: ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00"],
+          datasets: [
+            { label: "Allowed", data: [82, 96, 104, 118, 128, 143], borderColor: "#0f766e", backgroundColor: "rgba(15,118,110,0.12)", tension: 0.35, fill: true },
+            { label: "Blocked", data: [6, 8, 11, 9, 14, 17], borderColor: "#dc2626", backgroundColor: "rgba(220,38,38,0.08)", tension: 0.35, fill: true }
+          ]
+        },
+        options: common
+      });
+
+      charts.department = new Chart(document.getElementById("departmentChart"), {
+        type: "doughnut",
+        data: {
+          labels: departments.map((d) => d.name),
+          datasets: [{ data: departments.map((d) => d.spend), backgroundColor: ["#2563eb", "#0f766e", "#b45309", "#6d28d9"] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: common.plugins }
+      });
+
+      charts.dlp = new Chart(document.getElementById("dlpChart"), {
+        type: "bar",
+        data: {
+          labels: ["PII", "Keys", "Payroll", "Source"],
+          datasets: [{ label: "Blocks", data: [19, 11, 7, 10], backgroundColor: ["#dc2626", "#b45309", "#6d28d9", "#2563eb"] }]
+        },
+        options: common
+      });
+
+      charts.cost = new Chart(document.getElementById("costChart"), {
+        type: "line",
+        data: {
+          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+          datasets: [
+            { label: "Actual spend", data: [6400, 7200, 7800, 9300], borderColor: "#2563eb", tension: 0.35 },
+            { label: "Prevented spend", data: [3100, 4200, 5200, 6100], borderColor: "#168a4a", tension: 0.35 },
+            { label: "Unmanaged baseline", data: [14200, 17800, 20500, 24300], borderColor: "#dc2626", borderDash: [6, 6], tension: 0.35 }
+          ]
+        },
+        options: common
+      });
+
+      charts.model = new Chart(document.getElementById("modelChart"), {
+        type: "bar",
+        data: {
+          labels: ["GPT-4o mini", "Gemini Flash", "Claude Sonnet", "GPT-4o", "Cache"],
+          datasets: [{ label: "Requests", data: [4820, 3120, 1810, 740, 6210], backgroundColor: ["#0f766e", "#b45309", "#6d28d9", "#2563eb", "#168a4a"] }]
+        },
+        options: common
+      });
+
+      charts.routing = new Chart(document.getElementById("routingChart"), {
+        type: "radar",
+        data: {
+          labels: ["Quality", "Latency", "Cost", "Risk", "Context"],
+          datasets: [
+            { label: "Premium model", data: [95, 58, 42, 64, 92], borderColor: "#6d28d9", backgroundColor: "rgba(109,40,217,0.12)" },
+            { label: "Efficient model", data: [74, 92, 94, 72, 58], borderColor: "#0f766e", backgroundColor: "rgba(15,118,110,0.12)" }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: common.plugins,
+          scales: { r: { ticks: { color: "#617085", backdropColor: "transparent" }, grid: { color: "#d8e0ea" }, pointLabels: { color: "#14213d" } } }
+        }
+      });
+    }
+
+    function switchPage(page) {
+      document.querySelectorAll(".page").forEach((el) => el.classList.remove("active"));
+      document.getElementById("page-" + page).classList.add("active");
+      document.querySelectorAll(".nav-button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.page === page);
+      });
+    }
+
+    function simulateSpike() {
+      state.securityBlocks += 5;
+      state.monthlySavings += 920;
+      state.cacheRate = Math.min(86, state.cacheRate + 2);
+      state.traffic.unshift({ user: "new.user", dept: "Finance", model: "Blocked", policy: "PII blocked", cost: 0 });
+      state.traffic = state.traffic.slice(0, 5);
+      document.getElementById("securityBlocks").textContent = state.securityBlocks;
+      document.getElementById("monthlySavings").textContent = formatMoney(state.monthlySavings);
+      document.getElementById("cacheRate").textContent = state.cacheRate + "%";
+      document.getElementById("lastUpdated").textContent = new Date().toLocaleTimeString();
+      renderTraffic();
+    }
+
+    function buildReportPayload() {
+      return {
+        generated_at: new Date().toISOString(),
+        security_blocks_today: state.securityBlocks,
+        monthly_savings_usd: state.monthlySavings,
+        cache_hit_rate: state.cacheRate,
+        traffic: state.traffic,
+        departments,
+        policies
+      };
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportJsonReport() {
+      const payload = buildReportPayload();
+      downloadBlob(
+        new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+        "mcp-agents-audit-report.json"
+      );
+    }
+
+    function reportRows(payload) {
+      return [
+        ["Generated", new Date(payload.generated_at).toLocaleString()],
+        ["Security blocks today", String(payload.security_blocks_today)],
+        ["Monthly savings", formatMoney(payload.monthly_savings_usd)],
+        ["Cache hit rate", payload.cache_hit_rate + "%"],
+        ["Trace coverage", "100%"],
+        ["Gateway status", "Enforcing policy"]
+      ];
+    }
+
+    function exportPdfReport() {
+      if (!window.jspdf?.jsPDF) {
+        exportJsonReport();
+        alert("PDF library is still loading. Downloaded JSON instead. Please try PDF again in a moment.");
+        return;
+      }
+
+      const payload = buildReportPayload();
+      const doc = new window.jspdf.jsPDF({ unit: "pt", format: "a4" });
+      const margin = 48;
+      let y = 52;
+
+      function write(text, size = 10, options = {}) {
+        doc.setFont("helvetica", options.bold ? "bold" : "normal");
+        doc.setFontSize(size);
+        doc.setTextColor(options.color || "#14213d");
+        const lines = doc.splitTextToSize(text, 500);
+        doc.text(lines, margin, y);
+        y += lines.length * (size + 5);
+      }
+
+      function section(title) {
+        y += 14;
+        doc.setDrawColor("#d8e0ea");
+        doc.line(margin, y, 545, y);
+        y += 22;
+        write(title, 13, { bold: true });
+      }
+
+      function ensureRoom(space = 72) {
+        if (y + space > 760) {
+          doc.addPage();
+          y = 52;
+        }
+      }
+
+      write("MCP Agents Audit Report", 22, { bold: true });
+      write("Enterprise AI Gateway security, cost, and traceability summary.", 11, { color: "#617085" });
+
+      section("Executive Summary");
+      reportRows(payload).forEach(([label, value]) => {
+        ensureRoom();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(label, margin, y);
+        doc.setFont("helvetica", "normal");
+        doc.text(value, 220, y);
+        y += 20;
+      });
+
+      section("Live AI Traffic");
+      payload.traffic.forEach((item) => {
+        ensureRoom();
+        write(`${item.user} | ${item.dept} | ${item.model} | ${item.policy} | ${formatMoney(item.cost)}`, 10);
+      });
+
+      section("Department Budgets");
+      payload.departments.forEach((dept) => {
+        ensureRoom();
+        const pct = Math.round((dept.spend / dept.budget) * 100);
+        write(`${dept.name}: ${formatMoney(dept.spend)} of ${formatMoney(dept.budget)} used (${pct}%)`, 10);
+      });
+
+      section("DLP Policies");
+      payload.policies.forEach((policy) => {
+        ensureRoom();
+        write(`${policy.name}: ${policy.status}, ${policy.hits} matches in the last 24 hours`, 10);
+      });
+
+      doc.save("mcp-agents-audit-report.pdf");
+    }
+
+    function escapeXml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function docxParagraph(text, style = "") {
+      return `<w:p>${style}<w:r><w:t>${escapeXml(text)}</w:t></w:r></w:p>`;
+    }
+
+    function docxHeading(text) {
+      return docxParagraph(text, '<w:pPr><w:pStyle w:val="Heading1"/></w:pPr>');
+    }
+
+    function docxTable(rows) {
+      const cells = rows.map((row) => `
+        <w:tr>
+          ${row.map((cell) => `
+            <w:tc>
+              <w:tcPr><w:tcW w:w="4500" w:type="dxa"/></w:tcPr>
+              ${docxParagraph(cell)}
+            </w:tc>
+          `).join("")}
+        </w:tr>
+      `).join("");
+      return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/></w:tblPr>${cells}</w:tbl>`;
+    }
+
+    async function exportDocxReport() {
+      if (!window.JSZip) {
+        exportJsonReport();
+        alert("DOCX library is still loading. Downloaded JSON instead. Please try DOCX again in a moment.");
+        return;
+      }
+
+      const payload = buildReportPayload();
+      const summaryRows = [["Metric", "Value"], ...reportRows(payload)];
+      const trafficRows = [["User", "Department", "Model", "Policy", "Cost"], ...payload.traffic.map((item) => [
+        item.user,
+        item.dept,
+        item.model,
+        item.policy,
+        formatMoney(item.cost)
+      ])];
+      const deptRows = [["Department", "Spend", "Budget", "Used"], ...payload.departments.map((dept) => [
+        dept.name,
+        formatMoney(dept.spend),
+        formatMoney(dept.budget),
+        Math.round((dept.spend / dept.budget) * 100) + "%"
+      ])];
+      const policyRows = [["Policy", "Status", "24h Matches"], ...payload.policies.map((policy) => [
+        policy.name,
+        policy.status,
+        String(policy.hits)
+      ])];
+
+      const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:body>
+            ${docxParagraph("MCP Agents Audit Report", '<w:pPr><w:pStyle w:val="Title"/></w:pPr>')}
+            ${docxParagraph("Enterprise AI Gateway security, cost, and traceability summary.")}
+            ${docxHeading("Executive Summary")}
+            ${docxTable(summaryRows)}
+            ${docxHeading("Live AI Traffic")}
+            ${docxTable(trafficRows)}
+            ${docxHeading("Department Budgets")}
+            ${docxTable(deptRows)}
+            ${docxHeading("DLP Policies")}
+            ${docxTable(policyRows)}
+            <w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>
+          </w:body>
+        </w:document>`;
+
+      const zip = new JSZip();
+      zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+          <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+          <Default Extension="xml" ContentType="application/xml"/>
+          <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+          <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+        </Types>`);
+      zip.folder("_rels").file(".rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+          <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+        </Relationships>`);
+      zip.folder("word").file("document.xml", documentXml);
+      zip.folder("word").file("styles.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+          <w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:rPr><w:b/><w:sz w:val="36"/></w:rPr></w:style>
+          <w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style>
+        </w:styles>`);
+
+      const blob = await zip.generateAsync({
+        type: "blob",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      });
+      downloadBlob(blob, "mcp-agents-audit-report.docx");
+    }
+
+    document.querySelectorAll(".nav-button").forEach((button) => {
+      button.addEventListener("click", () => switchPage(button.dataset.page));
+    });
+
+    document.getElementById("simulateSpike").addEventListener("click", simulateSpike);
+    document.getElementById("exportJson").addEventListener("click", exportJsonReport);
+    document.getElementById("exportPdf").addEventListener("click", exportPdfReport);
+    document.getElementById("exportDocx").addEventListener("click", exportDocxReport);
+    document.getElementById("runGuard").addEventListener("click", runGuard);
+    document.getElementById("loadSafePrompt").addEventListener("click", () => {
+      document.getElementById("promptInput").value = "Summarize the Q2 product launch feedback and route routine sentiment analysis to the lowest-cost approved model.";
+      runGuard();
+    });
+
+    renderTraffic();
+    renderDepartments();
+    renderEvents();
+    renderPolicies();
+    renderTraceList();
+    renderRoutes();
+    renderConnectors();
+    runGuard();
+    buildCharts();
+    document.getElementById("lastUpdated").textContent = new Date().toLocaleTimeString();
+  </script>
+</body>
+
+</html>

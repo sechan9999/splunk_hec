@@ -1,0 +1,20 @@
+# === Original MCPAgents dependencies ===
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-anthropic>=0.1.1
+langchain-google-genai>=0.0.6
+langchain-core>=0.1.0
+pydantic>=2.5.0
+tiktoken>=0.5.2
+redis>=5.0.1
+python-dotenv>=1.0.0
+asyncio-throttle>=1.0.2
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+
+# === NEW: Splunk Integration ===
+splunk-sdk>=2.0.0            # Splunk Python SDK (modular inputs, REST API)
+requests>=2.31.0             # HTTP client (HEC, SOAR, MCP Server)
+fastapi>=0.110.0             # Webhook server (Splunk Alert receiver)
+uvicorn>=0.27.0              # ASGI server for FastAPI
+httpx>=0.26.0                # Async HTTP (optional, for async HEC)

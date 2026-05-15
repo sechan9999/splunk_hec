@@ -1,0 +1,133 @@
+# 🔥 MCPAgents × Splunk — Agentic Ops Control Center
+
+> **Splunk Agentic Ops Hackathon 2026** (May 18 – Jun 15, 2026)  
+> Built on: [sechan9999/MCPagents](https://github.com/sechan9999/MCPagents) + [sechan9999/splunk-app-examples](https://github.com/sechan9999/splunk-app-examples)
+
+## 🎯 핵심 혁신: Closed-Loop Agentic Ops
+
+MCPAgents가 **Splunk를 관찰하고(Tool)** + **Splunk가 MCPAgents를 감시(Observability)** 하는 양방향 폐쇄 루프를 구현합니다.
+
+```
+MCPAgents                    Splunk Platform
+─────────────────────────────────────────────────────────
+① LLM/Tool 이벤트 ──HEC──▶ Splunk Cloud (index=mcp_agents)
+② Tool Manager   ◀──MCP──  Splunk MCP Server (GA 2026)
+③ DLP Violation  ──WH──▶  Splunk SOAR (Foundation-sec)
+④ Splunk Alert   ──WH──▶  Auto-Remediation (CDTS이상탐지)
+⑤ Dashboard      ◀──SPL──  Splunk Live Panels
+```
+
+## 📦 새로 추가된 파일 (Original은 100% 유지)
+
+| 파일 | 주차 | 설명 |
+|------|------|------|
+| `splunk_telemetry.py` | Week 1 | Splunk HEC 텔레메트리 에미터 (비동기 배치) |
+| `tools/splunk_mcp_tool.py` | Week 2 | Splunk MCP Server Tool connector + NL→SPL |
+| `security/soar_bridge.py` | Week 3 | DLP → Foundation-sec → SOAR 자동 플레이북 |
+| `auto_remediation.py` | Week 4 | CDTS 이상탐지 → Router 자동 복구 루프 |
+| `multi_llm_platform/observability.py` | Week 4 | SplunkBackend 추가 (기존 API 호환) |
+| `enterprise_mcp_connector/audit_logger.py` | Week 4 | HEC 싱크 추가 |
+| `splunk_app/` | Week 4 | Splunk Enterprise App 패키지 |
+| `splunk_app/default/savedsearches.conf` | Week 4 | SPL 이상탐지 알림 (CDTS) |
+| `splunk_app/bin/mcp_agents_input.py` | Week 4 | Modular Input (splunk-app-examples 패턴) |
+| `dashboard.html` | Week 4 | Splunk 섹션 3개 추가 |
+| `main.py` | Week 4 | FastAPI 통합 엔트리포인트 |
+
+## 🚀 빠른 시작
+
+### 1. 설치
+```bash
+pip install -r requirements.txt
+```
+
+### 2. 환경 변수 설정
+```bash
+cp .env.example .env
+# SPLUNK_HEC_URL, SPLUNK_HEC_TOKEN 설정
+```
+
+### 3. Docker Compose (Splunk + MCPAgents + Redis)
+```bash
+docker-compose up
+# Splunk Web: http://localhost:8000 (admin/mcpagents2026)
+# MCPAgents:  http://localhost:8001
+```
+
+### 4. 텔레메트리 테스트
+```bash
+python splunk_telemetry.py        # HEC 이벤트 전송 테스트
+python tools/splunk_mcp_tool.py   # NL→SPL 쿼리 테스트
+python security/soar_bridge.py    # DLP→SOAR 테스트
+python auto_remediation.py        # 자동 복구 테스트
+```
+
+### 5. 서버 실행
+```bash
+python main.py --server
+# → http://localhost:8000/health
+# → http://localhost:8000/docs (Swagger UI)
+# → http://localhost:8000/splunk/alert (webhook)
+```
+
+## 🏗️ 아키텍처
+
+### ① Splunk HEC Telemetry Emitter (`splunk_telemetry.py`)
+```python
+from splunk_telemetry import get_telemetry, init_telemetry
+
+tel = init_telemetry(hec_url, hec_token)
+tel.emit_llm_call(model="claude-3.5-sonnet", cost_usd=0.003, latency_ms=780)
+tel.emit_router_decision(complexity="COMPLEX", selected_model="claude-3.5-sonnet")
+tel.emit_dlp_violation(rule_id="DLP-001", action_taken="block")
+```
+
+### ② Splunk MCP Tool (`tools/splunk_mcp_tool.py`)
+```python
+from tools.splunk_mcp_tool import SplunkMCPTool
+
+tool = SplunkMCPTool()
+result = tool.execute("지난 1시간 LLM 비용 얼마야?")
+# → SPL 자동 생성 + Splunk MCP Server 또는 REST API 쿼리
+```
+
+### ③ DLP → SOAR Bridge (`security/soar_bridge.py`)
+```python
+from security.soar_bridge import patch_dlp_engine_with_soar
+from enterprise_mcp_connector.dlp_policy import DLPPolicyEngine
+
+engine = DLPPolicyEngine()
+patch_dlp_engine_with_soar(engine)
+# → DLP 위반 시 Foundation-sec 스코어링 + SOAR 플레이북 자동 트리거
+```
+
+### ④ Auto-Remediation (`auto_remediation.py`)
+```python
+from auto_remediation import get_anomaly_handler
+
+handler = get_anomaly_handler()
+handler.handle({"result": {"anomaly_type": "cost_spike", "metric_value": "8.5"}})
+# → Router cost_weight 증가 + 저비용 모델 전환
+```
+
+## 📊 Splunk App 설치
+
+```bash
+# Splunk Enterprise에 앱 설치
+cp -r splunk_app $SPLUNK_HOME/etc/apps/mcpagents_splunk
+$SPLUNK_HOME/bin/splunk restart
+
+# HEC 토큰 생성 (Splunk Web)
+# Settings → Data Inputs → HTTP Event Collector → New Token
+# → index: mcp_agents, sourcetype: mcp:agent:event
+```
+
+## 🏆 Hackathon Tracks
+
+| Track | 구현 |
+|-------|------|
+| **Observability** | HEC Telemetry + CDTS 이상탐지 + Auto-Remediation |
+| **Security** | DLP → Foundation-sec → SOAR Bridge |
+| **Platform** | Splunk MCP Server Tool + Modular Input + SPL NL Query |
+
+## 📄 라이선스
+Apache 2.0 (splunk-app-examples 동일)

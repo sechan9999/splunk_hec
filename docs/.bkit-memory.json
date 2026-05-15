@@ -1,0 +1,41 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-05-15T12:00:00.000Z",
+  "activeFeatures": ["splunk-hec-emitter", "splunk-mcp-tool"],
+  "primaryFeature": "splunk-mcp-tool",
+  "features": {
+    "splunk-mcp-tool": {
+      "phase": "check",
+      "planCreatedAt": "2026-05-15T12:40:00.000Z",
+      "checkAt": "2026-05-15T13:00:00.000Z",
+      "matchRate": 100,
+      "iterationCount": 0,
+      "taskId": 6
+    },
+    "splunk-hec-emitter": {
+      "phase": "completed",
+      "planCreatedAt": "2026-05-15T12:00:00.000Z",
+      "designCreatedAt": "2026-05-15T12:10:00.000Z",
+      "doStartedAt": "2026-05-15T12:20:00.000Z",
+      "checkAt": "2026-05-15T12:30:00.000Z",
+      "matchRate": 96,
+      "iterationCount": 0,
+      "taskId": 4
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Enterprise",
+    "phaseHistory": [
+      { "phase": "plan", "feature": "splunk-hec-emitter", "at": "2026-05-15T12:00:00.000Z" }
+    ]
+  },
+  "session": {
+    "startedAt": "2026-05-15T12:00:00.000Z",
+    "onboardingCompleted": true,
+    "lastActivity": "2026-05-15T12:00:00.000Z"
+  },
+  "history": [
+    { "action": "plan", "feature": "splunk-hec-emitter", "at": "2026-05-15T12:00:00.000Z" }
+  ]
+}

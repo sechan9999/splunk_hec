@@ -1,0 +1,11 @@
+.vercel
+# Splunk
+*.pyc
+__pycache__/
+.env
+enterprise_audit.log
+splunk_app/lookups/*.csv.bak
+
+# Dev tooling
+.bkit/
+.claude/
