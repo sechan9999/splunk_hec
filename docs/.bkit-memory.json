@@ -1,23 +1,20 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-05-15T12:00:00.000Z",
+  "lastUpdated": "2026-05-15T17:05:00.000Z",
   "activeFeatures": [
     "splunk-hec-emitter",
     "splunk-mcp-tool",
-    "splunk-soar-brigde",
-    "splunk-auto-remediation"
+    "splunk-soar-brigde"
   ],
-  "primaryFeature": "splunk-auto-remediation",
+  "primaryFeature": "splunk-soar-brigde",
   "features": {
     "splunk-auto-remediation": {
-      "phase": "completed",
-      "planCreatedAt": "2026-05-15T14:20:00.000Z",
-      "designCreatedAt": "2026-05-15T14:25:00.000Z",
-      "doStartedAt": "2026-05-15T14:30:00.000Z",
-      "checkAt": "2026-05-15T14:40:00.000Z",
+      "phase": "archived",
       "matchRate": 100,
       "iterationCount": 0,
-      "taskId": 12
+      "startedAt": "2026-05-15T14:20:00.000Z",
+      "archivedAt": "2026-05-15T17:05:00.000Z",
+      "archivedTo": "docs/archive/2026-05/splunk-auto-remediation/"
     },
     "splunk-soar-brigde": {
       "phase": "completed",
@@ -71,9 +68,9 @@
       "at": "2026-05-15T12:00:00.000Z"
     }
   ],
-  "sessionCount": 1,
+  "sessionCount": 2,
   "lastSession": {
-    "startedAt": "2026-05-15T13:39:11.725Z",
+    "startedAt": "2026-05-15T16:58:18.556Z",
     "platform": "claude",
     "level": "Enterprise"
   }
