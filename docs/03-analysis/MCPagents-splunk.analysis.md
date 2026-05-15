@@ -10,9 +10,10 @@
   are already analyzed & archived at 96–100%. This analysis is a **contract-consistency
   check** of the only un-analyzed, recently changed code: the demo app.
 
-## Match Rate: 88% (Check < 90% → iterate recommended)
+## Match Rate: 100% (Act iteration 1 complete — all gaps closed)
 
-9 integration assertions verified; 1 critical crash fixed, 3 minor non-crash gaps remain.
+9 integration assertions verified. Iteration 1 (2026-05-15): gaps #2–4 resolved.
+History: 88% (Check) → 100% (Act-1).
 
 ## Backend Contract (source of truth)
 
@@ -27,9 +28,9 @@
 | # | Severity | Location | Gap | Status |
 |---|----------|----------|-----|--------|
 | 1 | Critical | demo_app.py:179 | Read int `steps` count as iterable → `TypeError: 'int' object is not iterable`. Real list is `result.result.tool_results`. | ✅ FIXED |
-| 2 | Minor | demo_app.py:348 (Tab4 SOAR) | `resp.get("result",{}).get("tool_results",[])` assumes `result` is a dict; `resp.result` is typed `Any`. Same crash class as #1 if a tool returns a non-dict `result`. No `isinstance` guard. | ⚠ Open |
-| 3 | Minor | demo_app.py:173 | Agent-failed-but-HTTP-200 (`success:False`, no top-level `error`) not surfaced — only `"error" in result` is checked; failure falls through to empty tool render. | ⚠ Open |
-| 4 | Minor/UX | demo_app.py:299–308 (Tab3) | Cooldown response `{skipped:True, reason}` has no `handled` key → rendered as misleading "handled=False — {dict}". Cooldown reason not shown clearly. | ⚠ Open |
+| 2 | Minor | demo_app.py:356 (Tab4 SOAR) | `resp.get("result",{}).get("tool_results",[])` assumed dict; same crash class as #1. | ✅ FIXED (isinstance guard) |
+| 3 | Minor | demo_app.py:173 | Agent-failed-but-HTTP-200 (`success:False`) not surfaced. | ✅ FIXED (`success is False` check) |
+| 4 | Minor/UX | demo_app.py:301 (Tab3) | Cooldown `{skipped:True}` mislabeled "handled=False". | ✅ FIXED (skipped/error/reason branches) |
 | 5 | Info | demo_app.py:131–132 | `telemetry.get_stats()` keys `sent`/`dropped` assumed; safe via `.get(...,0)` defaults. No action needed. | ✓ OK |
 
 ## Matched (no gap)
@@ -39,10 +40,10 @@
 - `/splunk/alert` handled path → `anomaly_value, threshold, actions[{action,result}], cooldown_sec` ✓
 - `/splunk/alert` below-threshold → `{handled:False, reason}` ✓
 
-## Recommendations
+## Resolution (Act iteration 1, 2026-05-15)
 
-1. Apply defensive `isinstance(res_obj, dict)` guard at demo_app.py:348 (mirror the line 179 fix).
-2. Surface `success:False` in Tab1 (check `result.get("success") is False`).
-3. Tab3: detect `resp.get("skipped")` and show the cooldown `reason` distinctly.
+1. ✅ demo_app.py:356 — `isinstance(res_obj, dict)` guard (mirrors line 181).
+2. ✅ demo_app.py:173 — `failed = result.get("success") is False or (...)`.
+3. ✅ demo_app.py:301–315 — Tab3 branches: handled / skipped(cooldown) / error / reason.
 
-Items 1–3 are small, non-architectural → `/pdca iterate MCPagents-splunk` (or apply inline) to reach ≥90%.
+All gaps closed. `python -m py_compile demo_app.py` passes. Match rate 100% → ready for `/pdca report`.
