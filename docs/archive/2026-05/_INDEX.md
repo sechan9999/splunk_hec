@@ -6,3 +6,4 @@
 | splunk-soar-brigde | 100% | 2026-05-15 | [docs](splunk-soar-brigde/) |
 | splunk-mcp-tool | 100% | 2026-05-15 | [docs](splunk-mcp-tool/) |
 | splunk-hec-emitter | 96% | 2026-05-15 | [docs](splunk-hec-emitter/) |
+| endpoint-auth | 100% | 2026-05-16 | [docs](endpoint-auth/) |
