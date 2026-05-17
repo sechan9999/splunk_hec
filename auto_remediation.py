@@ -335,10 +335,12 @@ def create_splunk_webhook_router(handler: AnomalyHandler):
         app.include_router(create_splunk_webhook_router(handler))
     """
     try:
-        from fastapi import APIRouter, Request
+        from fastapi import APIRouter, Request, Depends
+        from security.api_auth import require_token
+        _auth = [Depends(require_token)] if require_token else []
         router = APIRouter(prefix="/splunk", tags=["splunk"])
 
-        @router.post("/alert")
+        @router.post("/alert", dependencies=_auth)
         async def receive_splunk_alert(request: Request):
             payload = await request.json()
             return handler.handle(payload)

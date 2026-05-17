@@ -140,6 +140,7 @@ with st.sidebar:
         hec_url       = "http://localhost:8088"
         hec_token     = ""
         splunk_index  = "mcp_agents"
+        api_token     = ""
     else:
         mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
         splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
@@ -148,6 +149,8 @@ with st.sidebar:
         hec_url       = st.text_input("HEC URL", "http://localhost:8088")
         hec_token     = st.text_input("HEC Token", "", type="password")
         splunk_index  = st.text_input("Splunk Index", "mcp_agents")
+        api_token     = st.text_input("API Token (X-MCP-Token)", "", type="password",
+                                      help="Sent to the backend if it has MCP_API_TOKEN set.")
     st.divider()
     auto_refresh  = st.toggle("Auto-refresh (5s)", value=False)
 
@@ -164,6 +167,9 @@ def _post(url, **kw):
     except Exception:
         return None
 
+def _auth_headers():
+    return {"X-MCP-Token": api_token} if api_token else None
+
 def health():
     if demo_mode:
         return _demo_health()
@@ -174,7 +180,8 @@ def agent_run(query, user_id="demo"):
     if demo_mode:
         time.sleep(0.5)
         return _demo_agent_run(query)
-    r = _post(f"{mcpagents_url}/agent/run", json={"query": query, "user_id": user_id})
+    r = _post(f"{mcpagents_url}/agent/run", json={"query": query, "user_id": user_id},
+              headers=_auth_headers())
     return r.json() if r and r.ok else {"error": str(r)}
 
 def fire_alert(anomaly_type, value):
@@ -182,7 +189,8 @@ def fire_alert(anomaly_type, value):
         time.sleep(0.3)
         return _demo_alert(anomaly_type, value)
     r = _post(f"{mcpagents_url}/splunk/alert",
-              json={"result": {"anomaly_type": anomaly_type, "metric_value": str(value)}})
+              json={"result": {"anomaly_type": anomaly_type, "metric_value": str(value)}},
+              headers=_auth_headers())
     return r.json() if r and r.ok else {"error": "connection failed"}
 
 def splunk_search(spl, earliest="-15m", limit=20):

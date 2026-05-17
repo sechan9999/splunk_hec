@@ -70,9 +70,13 @@ def initialize_splunk_integration():
 def create_app():
     """FastAPI 앱 생성"""
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, Depends
         from fastapi.middleware.cors import CORSMiddleware
         from auto_remediation import get_anomaly_handler, create_splunk_webhook_router
+        from security.api_auth import require_token, auth_enabled
+
+        _AUTH = [Depends(require_token)] if require_token else []
+        logger.info(f"API auth: {'ENABLED (X-MCP-Token)' if auth_enabled() else 'open (MCP_API_TOKEN unset)'}")
 
         app = FastAPI(
             title="MCPAgents × Splunk",
@@ -90,27 +94,27 @@ def create_app():
             app.include_router(splunk_router)
 
         # ── Metrics API (Splunk Modular Input 폴링용) ──────
-        @app.get("/metrics/llm")
+        @app.get("/metrics/llm", dependencies=_AUTH)
         async def metrics_llm():
             from multi_llm_platform.observability import Tracer, DebugDashboard
             db = DebugDashboard(Tracer())
             return db.get_statistics()
 
-        @app.get("/metrics/cost")
+        @app.get("/metrics/cost", dependencies=_AUTH)
         async def metrics_cost():
             from splunk_telemetry import get_telemetry
             return get_telemetry().get_stats()
 
-        @app.get("/metrics/dlp")
+        @app.get("/metrics/dlp", dependencies=_AUTH)
         async def metrics_dlp():
             from enterprise_mcp_connector.dlp_policy import DLPPolicyEngine
             return DLPPolicyEngine().get_statistics()
 
-        @app.get("/metrics/router")
+        @app.get("/metrics/router", dependencies=_AUTH)
         async def metrics_router():
             return {"status": "ok", "message": "router metrics via HEC telemetry"}
 
-        @app.get("/metrics/cache")
+        @app.get("/metrics/cache", dependencies=_AUTH)
         async def metrics_cache():
             return {"status": "ok", "message": "cache metrics via HEC telemetry"}
 
@@ -125,7 +129,7 @@ def create_app():
             }
 
         # ── Agent 실행 엔드포인트 ──────────────────────────
-        @app.post("/agent/run")
+        @app.post("/agent/run", dependencies=_AUTH)
         async def run_agent(body: dict):
             from advanced_agent import AdvancedMCPAgent, AgentContext
             from splunk_telemetry import get_telemetry
