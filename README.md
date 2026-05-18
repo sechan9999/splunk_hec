@@ -77,7 +77,7 @@ cp .env.example .env
 #### 3. Docker Compose (Splunk + MCPAgents + Redis)
 ```bash
 docker-compose up
-# Splunk Web:  http://localhost:8000  (admin/mcpagents2026)
+# Splunk Web:  http://localhost:8000  (admin / set via SPLUNK_PASSWORD)
 # MCPAgents:   http://localhost:8001
 # Redis:       localhost:6379
 ```
@@ -109,6 +109,33 @@ python main.py --server
 ---
 
 ## 🏗️ Architecture
+
+### End-to-End (how LLMai interacts with Splunk + AI)
+
+```
+                    LLMai — Closed-Loop Agentic Ops on Splunk
+
+  ┌──────────────── LLMai (FastAPI + AdvancedMCPAgent) ─────────────────┐
+  │  User ▶ Streamlit Control Center ▶ /agent/run ▶ Multi-LLM Router    │
+  │         (4 tabs, Demo Mode)          │          + Semantic Cache     │
+  │  Tools: splunk_query · supabase_query · code/web/data ...            │
+  └──┬──────────────┬───────────────┬───────────────┬───────────────────┘
+     │① HEC          │② MCP/REST     │③ DLP webhook   │④ CDTS alert webhook
+     │ telemetry     │ NL→SPL        │ PII risk       │ POST /splunk/alert
+     ▼               ▼ ▲             ▼                ▲
+  ┌──────────────────┼─────────────────────────────────┼─────────────────┐
+  │ SPLUNK PLATFORM   │                                 │                 │
+  │ index=mcp_agents ◀┘  Splunk MCP Server ─────────────┘  Splunk SOAR    │
+  │ dashboards / SPL     Foundation-sec PII scoring        (6 playbooks)  │
+  │                                                        CDTS anomaly   │
+  └──────────────────────────────────────────────────────────┬───────────┘
+     ▲                                                         │
+     └────────── ④ auto-remediation: router re-weight ◀────────┘
+                  (runtime, auto-restore after cooldown)
+
+  Security: X-MCP-Token (env-gated, constant-time) on /agent/run,
+            /splunk/alert, /metrics/* · DLP→SOAR · creds via env only
+```
 
 ### ① Splunk HEC Telemetry Emitter (`splunk_telemetry.py`)
 ```python
@@ -175,4 +202,12 @@ $SPLUNK_HOME/bin/splunk restart
 ---
 
 ## 📄 License
-Apache 2.0 (same as splunk-app-examples)
+
+Licensed under the **Apache License 2.0** — see [`LICENSE`](LICENSE).
+
+```
+Copyright 2026 sechan9999
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+```
