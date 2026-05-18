@@ -189,6 +189,14 @@ $SPLUNK_HOME/bin/splunk restart
 # → index: mcp_agents, sourcetype: mcp:agent:event
 ```
 
+### 📈 Dashboard
+
+Dashboard Studio definition: [`splunk_app/dashboards/mcp_agents_overview.json`](splunk_app/dashboards/mcp_agents_overview.json)
+
+Import: **Splunk → Dashboards → Create New → Dashboard Studio → ⋮ Source → paste the JSON → Save.**
+
+> **LLMai — Agentic Ops Dashboard.** A single Dashboard Studio view over `index=mcp_agents`, the live HEC feed from the MCPAgents × Splunk platform. KPI tiles show 24-hour LLM spend, call volume, semantic-cache hit rate, and DLP violations; charts break cost and routing down by model; and tables surface anomalies that triggered autonomous remediation and every DLP event with its rule, sensitivity, and action taken. It makes the project's core innovation visible in one screen: the AI agent streams telemetry into Splunk, and Splunk's anomaly detection feeds back to reconfigure the agent — a closed observability loop.
+
 ---
 
 ## 🏆 Hackathon Tracks
