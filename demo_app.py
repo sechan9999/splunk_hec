@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 
 import requests
 import streamlit as st
+import streamlit.components.v1 as components
+
+OVERVIEW_URL = "https://sechan9999.github.io/splunk_hec/"
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -269,9 +272,16 @@ with col4:
 st.divider()
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_agent, tab_events, tab_remediation, tab_soar = st.tabs([
-    "🤖 Agent Run", "📊 Live Splunk Events", "🔧 Auto-Remediation", "🛡️ DLP / SOAR",
+tab_overview, tab_agent, tab_events, tab_remediation, tab_soar = st.tabs([
+    "🏠 Overview", "🤖 Agent Run", "📊 Live Splunk Events",
+    "🔧 Auto-Remediation", "🛡️ DLP / SOAR",
 ])
+
+# ── Tab 0: Overview (embedded product landing page) ───────────────────────────
+with tab_overview:
+    st.caption(f"Product landing — embedded from {OVERVIEW_URL} "
+               f"· [↗ open full page]({OVERVIEW_URL})")
+    components.iframe(OVERVIEW_URL, height=1100, scrolling=True)
 
 # ── Tab 1: Agent Run ──────────────────────────────────────────────────────────
 with tab_agent:
