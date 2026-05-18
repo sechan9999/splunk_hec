@@ -1,25 +1,37 @@
 """
-MCPAgents x Splunk — Hackathon Demo App
-Streamlit all-in-one: Agent Run + Live Events + Auto-Remediation + Health
-Supports DEMO MODE when backend services are unavailable (e.g. Streamlit Cloud).
+MCPAgents × Splunk — Hackathon Demo v2.0
+Mission Control · AI Agent Lab · Live Threat Feed · ROI Impact · SPL Query Lab
+
+Runs fully in DEMO MODE on Streamlit Cloud (no backend needed).
 """
 import json
-import time
+import math
 import random
+import time
 import urllib3
 from datetime import datetime, timedelta
 
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 import requests
 import streamlit as st
 import streamlit.components.v1 as components
-
-OVERVIEW_URL = "https://sechan9999.github.io/splunk_hec/"
+from plotly.subplots import make_subplots
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Constants ─────────────────────────────────────────────────────────────────
+MODELS   = ["gpt-4o", "claude-sonnet-4", "gemini-2.0-flash", "gpt-4o-mini"]
+M_COLOR  = {"gpt-4o": "#74c7ec", "claude-sonnet-4": "#cba6f7",
+             "gemini-2.0-flash": "#a6e3a1", "gpt-4o-mini": "#f9e2af"}
+M_COST   = {"gpt-4o": 0.030, "claude-sonnet-4": 0.015,
+             "gemini-2.0-flash": 0.0035, "gpt-4o-mini": 0.0006}
+OVERVIEW_URL = "https://secnan9999.github.io/splunk_hec/"
+
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="MCPAgents x Splunk",
+    page_title="MCPAgents × Splunk",
     page_icon="🔥",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -27,137 +39,144 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.metric-card {
-    background: #1e1e2e; border-radius: 8px; padding: 16px;
-    border: 1px solid #313244; margin: 4px 0;
+/* ── Global ── */
+html, body, [data-testid="stApp"] { background: #11111b; }
+
+/* ── KPI cards ── */
+.kpi-card {
+    background: #1e1e2e; border-radius: 12px; padding: 20px 24px;
+    border: 1px solid #313244; text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
-.status-ok  { color: #a6e3a1; font-weight: bold; }
-.status-err { color: #f38ba8; font-weight: bold; }
+.kpi-value { font-size: 2.2em; font-weight: 800; margin: 0; }
+.kpi-label { font-size: 0.78em; color: #6c7086; margin-top: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+.kpi-delta-good { color: #a6e3a1; font-size: 0.85em; }
+.kpi-delta-bad  { color: #f38ba8; font-size: 0.85em; }
+
+/* ── Section header ── */
+.sec-header {
+    font-size: 1.05em; font-weight: 700; color: #cdd6f4;
+    letter-spacing: 0.04em; margin-bottom: 4px;
+    border-left: 3px solid #cba6f7; padding-left: 10px;
+}
+
+/* ── Demo badge ── */
 .demo-badge {
-    background: linear-gradient(135deg, #f5a623, #f7c948);
-    color: #1e1e2e; padding: 4px 12px; border-radius: 12px;
-    font-weight: bold; font-size: 0.75em; margin-left: 8px;
+    background: linear-gradient(135deg,#f5a623,#f7c948);
+    color:#11111b; padding:3px 10px; border-radius:10px;
+    font-weight:800; font-size:0.72em;
 }
+
+/* ── Step pill ── */
+.step-pill {
+    display:inline-block; background:#313244; border-radius:20px;
+    padding:4px 14px; margin:3px 2px; font-size:0.82em; color:#cdd6f4;
+}
+.step-pill.done  { background:#1e3a2f; color:#a6e3a1; border:1px solid #a6e3a1; }
+.step-pill.run   { background:#2a1e3a; color:#cba6f7; border:1px solid #cba6f7; }
+
+/* ── Alert rows ── */
+.alert-high   { border-left: 4px solid #f38ba8; padding: 8px 12px; background: #2a1e24; border-radius: 4px; margin: 4px 0; }
+.alert-medium { border-left: 4px solid #fab387; padding: 8px 12px; background: #2a2218; border-radius: 4px; margin: 4px 0; }
+.alert-low    { border-left: 4px solid #a6e3a1; padding: 8px 12px; background: #1e2a22; border-radius: 4px; margin: 4px 0; }
+
+/* ── ROI number ── */
+.roi-number { font-size:3em; font-weight:900; color:#a6e3a1; }
+.roi-label  { color:#6c7086; font-size:0.85em; text-transform:uppercase; letter-spacing:0.06em; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Demo data generators ─────────────────────────────────────────────────────
-MODELS = ["gpt-4o", "claude-sonnet-4", "gemini-2.0-flash", "gpt-4o-mini"]
 
-def _demo_health():
-    return {
-        "status": "ok", "version": "2.0.0-splunk",
-        "telemetry": {"sent": random.randint(80, 350), "dropped": random.randint(0, 2)},
-        "remediation": {"remediator": {"remediation_count": random.randint(3, 12),
-                                        "active_cooldowns": {}}},
-    }
+# ══════════════════════════════════════════════════════════════════════════════
+# Demo Data Generators
+# ══════════════════════════════════════════════════════════════════════════════
 
-_VISITOR_KEYWORDS = [
-    "방문자", "누적 방문자", "방문자 수", "누적 방문", "방문 수",
-    "visitor", "visitors", "cumulative visitor", "cumulative visitors",
-    "total visitors", "visitor count", "number of visitors",
-]
-
-def _is_visitors_query(q):
-    ql = (q or "").lower()
-    return any(k in ql for k in _VISITOR_KEYWORDS)
-
-def _demo_visitors(query):
-    n = random.randint(5000, 50000)
-    today = random.randint(40, 320)
-    return {
-        "success": True, "query": query,
-        "result": {
-            "response": (f"[Demo] Cumulative visitors: {n:,} "
-                         f"(+{today} today). "
-                         f"Source: Supabase visitors table (simulated)."),
-            "model": "supabase-mcp",
-            "tool_results": [
-                {"tool": "supabase_query", "result": {
-                    "source": "demo", "metric": "cumulative_visitors",
-                    "count": n, "today": today, "table": "visitors"}},
-            ],
-        },
-    }
-
-def _demo_agent_run(query):
-    if _is_visitors_query(query):
-        return _demo_visitors(query)
-    model = random.choice(MODELS)
-    return {
-        "success": True, "query": query,
-        "result": {
-            "response": f"[Demo] Analysis complete for '{query}'. Total cost $4.23 in the last hour, avg latency 320ms, 2 DLP violations detected.",
-            "model": model, "latency_ms": random.randint(180, 900),
-            "cost_usd": round(random.uniform(0.01, 0.15), 4),
-            "tool_results": [
-                {"tool": "splunk_query", "result": {"spl": "index=mcp_agents | stats count by model", "rows": 5}},
-                {"tool": "cost_analyzer", "result": {"total_cost": 4.23, "top_model": model}},
-            ],
-        },
-    }
-
-def _demo_events(n=8):
-    rows = []
+@st.cache_data(ttl=30)
+def _gen_timeseries(hours=24, points_per_hour=4):
+    """Generate realistic cost/call time-series for last N hours."""
     now = datetime.now()
-    etypes = ["mcp_llm_call", "mcp_router_decision", "mcp_tool_call", "mcp_cache_hit", "mcp_dlp_violation"]
-    for i in range(n):
-        t = now - timedelta(seconds=random.randint(10, 600))
+    rows = []
+    for h in range(hours * points_per_hour, 0, -1):
+        ts = now - timedelta(minutes=15 * h)
+        hour = ts.hour
+        # business-hours spike pattern
+        load = 1.0 + 2.0 * math.exp(-0.5 * ((hour - 14) / 3) ** 2)
+        for model in MODELS:
+            calls = max(0, int(random.gauss(load * 8, 2)))
+            cost  = calls * M_COST[model] * random.uniform(0.8, 1.4)
+            rows.append({
+                "time":  ts,
+                "model": model,
+                "calls": calls,
+                "cost":  round(cost, 4),
+            })
+    return pd.DataFrame(rows)
+
+
+@st.cache_data(ttl=30)
+def _gen_events(n=120):
+    """Generate realistic event log."""
+    now = datetime.now()
+    etypes = ["mcp_llm_call", "mcp_router_decision", "mcp_cache_hit",
+              "mcp_cache_miss", "mcp_dlp_violation", "mcp_anomaly"]
+    weights = [0.40, 0.25, 0.18, 0.08, 0.05, 0.04]
+    rows = []
+    for _ in range(n):
+        ts = now - timedelta(seconds=random.randint(10, 86400))
+        etype = random.choices(etypes, weights=weights)[0]
         rows.append({
-            "_time": t.strftime("%Y-%m-%dT%H:%M:%S"),
-            "event_type": random.choice(etypes),
-            "model": random.choice(MODELS),
-            "cost_usd": str(round(random.uniform(0.001, 0.12), 4)),
-            "latency_ms": str(random.randint(80, 1200)),
+            "_time":      ts.strftime("%H:%M:%S"),
+            "event_type": etype,
+            "model":      random.choice(MODELS),
+            "cost_usd":   round(random.uniform(0.001, 0.12), 4),
+            "latency_ms": random.randint(80, 1800),
+            "ts":         ts,
         })
-    return sorted(rows, key=lambda r: r["_time"], reverse=True)
+    return pd.DataFrame(rows).sort_values("ts", ascending=False).drop(columns="ts")
 
-def _demo_alert(anomaly_type, value):
-    thresholds = {"cost_spike": 5.0, "latency_spike": 3000, "error_rate_high": 0.15,
-                  "dlp_burst": 10, "token_overrun": 100000}
-    th = thresholds.get(anomaly_type, 5.0)
-    return {
-        "handled": True, "anomaly_type": anomaly_type,
-        "anomaly_value": float(value), "threshold": th,
-        "actions": [
-            {"action": "downgrade_model", "result": "gpt-4o → gpt-4o-mini"},
-            {"action": "enable_cache", "result": "semantic_cache=ON"},
-            {"action": "rate_limit", "result": "max_rpm=30"},
-            {"action": "emit_telemetry", "result": "HEC event sent"},
-        ],
-        "cooldown_sec": 600,
-    }
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.title("⚙️ Configuration")
-    demo_mode = st.toggle("🎮 Demo Mode", value=True,
-                          help="Run with simulated data. Turn off to connect to real backends.")
-    st.divider()
-    if demo_mode:
-        st.caption("🎮 Demo Mode — backend & credentials not used (simulated data).")
-        mcpagents_url = "http://localhost:8001"
-        splunk_rest   = "https://localhost:8089"
-        splunk_user   = ""
-        splunk_pass   = ""
-        hec_url       = "http://localhost:8088"
-        hec_token     = ""
-        splunk_index  = "mcp_agents"
-        api_token     = ""
-    else:
-        mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
-        splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
-        splunk_user   = st.text_input("Splunk User", "")
-        splunk_pass   = st.text_input("Splunk Password", "", type="password")
-        hec_url       = st.text_input("HEC URL", "http://localhost:8088")
-        hec_token     = st.text_input("HEC Token", "", type="password")
-        splunk_index  = st.text_input("Splunk Index", "mcp_agents")
-        api_token     = st.text_input("API Token (X-MCP-Token)", "", type="password",
-                                      help="Sent to the backend if it has MCP_API_TOKEN set.")
-    st.divider()
-    auto_refresh  = st.toggle("Auto-refresh (5s)", value=False)
+@st.cache_data(ttl=60)
+def _gen_dlp_events(n=30):
+    rules = [
+        ("DLP-001", "SSN Pattern",     "HIGH",   "block"),
+        ("DLP-002", "Credit Card",     "HIGH",   "block"),
+        ("DLP-003", "Email Address",   "MEDIUM", "redact"),
+        ("DLP-004", "API Key Leak",    "HIGH",   "block"),
+        ("DLP-005", "Internal IP",     "LOW",    "log"),
+    ]
+    now = datetime.now()
+    rows = []
+    for _ in range(n):
+        rule_id, rule_name, sev, action = random.choice(rules)
+        ts = now - timedelta(seconds=random.randint(0, 7200))
+        rows.append({
+            "time":      ts,
+            "rule":      f"{rule_id} — {rule_name}",
+            "severity":  sev,
+            "action":    action,
+            "user":      f"user_{random.randint(1,20):03d}",
+            "soar_triggered": sev == "HIGH",
+        })
+    return pd.DataFrame(rows).sort_values("time", ascending=False)
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _kpi(label, value, delta=None, color="#cdd6f4", delta_good=True):
+    delta_html = ""
+    if delta is not None:
+        cls = "kpi-delta-good" if delta_good else "kpi-delta-bad"
+        delta_html = f'<div class="{cls}">{delta}</div>'
+    return f"""
+    <div class="kpi-card">
+      <div class="kpi-value" style="color:{color}">{value}</div>
+      <div class="kpi-label">{label}</div>
+      {delta_html}
+    </div>"""
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Backend helpers
+# ══════════════════════════════════════════════════════════════════════════════
+
 def _get(url, **kw):
     try:
         return requests.get(url, timeout=5, **kw)
@@ -170,375 +189,695 @@ def _post(url, **kw):
     except Exception:
         return None
 
-def _auth_headers():
-    return {"X-MCP-Token": api_token} if api_token else None
+def _demo_health():
+    return {
+        "status": "ok", "version": "2.0.0-splunk",
+        "telemetry": {"sent": random.randint(280, 350), "dropped": random.randint(0, 2)},
+        "remediation": {"remediator": {
+            "remediation_count": random.randint(8, 14),
+            "active_cooldowns": {}
+        }},
+    }
 
-def health():
+def _demo_agent_run(query, steps_placeholder):
+    """Simulated streaming agent execution."""
+    q_lower = query.lower()
+
+    # ── Visitor query ──
+    if any(k in q_lower for k in ["visitor", "방문자", "누적"]):
+        _stream_steps(steps_placeholder, [
+            ("supabase_query", "Connecting to Supabase visitors table…"),
+            ("aggregate",      "Counting cumulative rows…"),
+            ("synthesize",     "Generating response…"),
+        ])
+        n = random.randint(8500, 42000)
+        return {"success": True, "result": {
+            "response": f"Cumulative visitors: {n:,} (+{random.randint(40,320)} today). Source: Supabase visitors table.",
+            "tool_results": [{"tool": "supabase_query", "result": {"count": n, "table": "visitors"}}],
+        }}
+
+    # ── Cost / Splunk queries ──
+    if any(k in q_lower for k in ["cost", "비용", "dlp", "error", "cache", "latency", "splunk"]):
+        _stream_steps(steps_placeholder, [
+            ("spl_translate",  "Translating NL → SPL…"),
+            ("splunk_query",   "Querying index=mcp_agents…"),
+            ("cost_analyzer",  "Aggregating cost by model…"),
+            ("synthesize",     "Generating response…"),
+        ])
+        df = _gen_timeseries(hours=1)
+        total = df["cost"].sum()
+        top_m = df.groupby("model")["cost"].sum().idxmax()
+        return {"success": True, "result": {
+            "response": f"Last hour: total cost ${total:.4f}. Top model: {top_m} (${df[df.model==top_m]['cost'].sum():.4f}). Cache saved ~40%. 2 DLP events.",
+            "tool_results": [
+                {"tool": "splunk_query", "result": {"spl": "index=mcp_agents | stats sum(cost_usd) by model", "rows": 4}},
+                {"tool": "cost_analyzer", "result": {"total_cost": round(total, 4), "top_model": top_m}},
+            ],
+        }}
+
+    # ── General ──
+    _stream_steps(steps_placeholder, [
+        ("recall",        "Checking memory store…"),
+        ("analyze_data",  "Analyzing query intent…"),
+        ("synthesize",    "Generating response…"),
+    ])
+    return {"success": True, "result": {
+        "response": f"Query processed: '{query}'. Agent completed in {random.randint(180,900)}ms via {random.choice(MODELS)}.",
+        "tool_results": [{"tool": "analyze_data", "result": {"intent": "general", "confidence": 0.87}}],
+    }}
+
+
+def _stream_steps(placeholder, steps):
+    """Animate agent steps visually."""
+    done = []
+    for name, desc in steps:
+        with placeholder.container():
+            pills = "".join(
+                f'<span class="step-pill done">✓ {d}</span>' for d in done
+            )
+            pills += f'<span class="step-pill run">⟳ {name}</span>'
+            st.markdown(pills, unsafe_allow_html=True)
+            st.caption(f"▶ {desc}")
+        time.sleep(0.45)
+        done.append(name)
+    with placeholder.container():
+        pills = "".join(f'<span class="step-pill done">✓ {d}</span>' for d in done)
+        st.markdown(pills, unsafe_allow_html=True)
+
+
+def _demo_alert(anomaly_type, value):
+    thresholds = {"cost_spike": 5.0, "latency_spike": 3000,
+                  "error_rate_high": 0.15, "dlp_burst": 10, "token_overrun": 100000}
+    return {
+        "handled": True, "anomaly_type": anomaly_type,
+        "anomaly_value": float(value), "threshold": thresholds.get(anomaly_type, 5.0),
+        "actions": [
+            {"action": "downgrade_model",  "result": "gpt-4o → gemini-2.0-flash"},
+            {"action": "enable_cache",     "result": "semantic_cache=ON"},
+            {"action": "rate_limit",       "result": "max_rpm=30"},
+            {"action": "emit_telemetry",   "result": "HEC event sent to index=mcp_agents"},
+        ],
+        "cooldown_sec": 600,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Sidebar
+# ══════════════════════════════════════════════════════════════════════════════
+
+with st.sidebar:
+    st.markdown("## ⚙️ Configuration")
+    demo_mode = st.toggle("🎮 Demo Mode", value=True,
+                          help="Fully simulated — no backend or credentials needed.")
+    st.divider()
     if demo_mode:
-        return _demo_health()
-    r = _get(f"{mcpagents_url}/health")
-    return r.json() if r and r.ok else None
+        st.caption("🎮 All data is simulated. Toggle off to connect real backends.")
+        mcpagents_url = "http://localhost:8001"
+        api_token     = ""
+        splunk_rest   = "https://localhost:8089"
+        splunk_user   = ""
+        splunk_pass   = ""
+        hec_url       = "http://localhost:8088"
+        splunk_index  = "mcp_agents"
+    else:
+        mcpagents_url = st.text_input("MCPAgents URL", "http://localhost:8001")
+        api_token     = st.text_input("API Token (X-MCP-Token)", "", type="password")
+        splunk_rest   = st.text_input("Splunk REST URL", "https://localhost:8089")
+        splunk_user   = st.text_input("Splunk User", "")
+        splunk_pass   = st.text_input("Splunk Password", "", type="password")
+        hec_url       = st.text_input("HEC URL", "http://localhost:8088")
+        splunk_index  = st.text_input("Index", "mcp_agents")
 
-def agent_run(query, user_id="demo"):
-    if demo_mode:
-        time.sleep(0.5)
-        return _demo_agent_run(query)
-    r = _post(f"{mcpagents_url}/agent/run", json={"query": query, "user_id": user_id},
-              headers=_auth_headers())
-    return r.json() if r and r.ok else {"error": str(r)}
+    st.divider()
+    auto_refresh = st.toggle("🔄 Auto-refresh (10s)", value=False)
+    st.divider()
+    st.caption("**Stack:** FastAPI · Streamlit · Splunk HEC · Splunk SOAR · Multi-LLM Router · DLP Engine")
 
-def fire_alert(anomaly_type, value):
-    if demo_mode:
-        time.sleep(0.3)
-        return _demo_alert(anomaly_type, value)
-    r = _post(f"{mcpagents_url}/splunk/alert",
-              json={"result": {"anomaly_type": anomaly_type, "metric_value": str(value)}},
-              headers=_auth_headers())
-    return r.json() if r and r.ok else {"error": "connection failed"}
 
-def splunk_search(spl, earliest="-15m", limit=20):
-    if demo_mode:
-        return _demo_events(random.randint(5, 12))
-    try:
-        r = requests.post(
-            f"{splunk_rest}/services/search/jobs/export",
-            auth=(splunk_user, splunk_pass),
-            data={"search": f"search index={splunk_index} {spl} | head {limit}",
-                  "output_mode": "json", "earliest_time": earliest},
-            verify=False, timeout=10,
-        )
-        rows = []
-        for line in r.text.strip().splitlines():
-            if not line:
-                continue
-            try:
-                d = json.loads(line)
-                if "result" in d:
-                    rows.append(d["result"])
-            except Exception:
-                pass
-        return rows
-    except Exception:
-        return []
+# ══════════════════════════════════════════════════════════════════════════════
+# Header
+# ══════════════════════════════════════════════════════════════════════════════
 
-def hec_status():
-    if demo_mode:
-        return True
-    try:
-        r = requests.get(f"{hec_url}/services/collector/health", timeout=3)
-        return r.status_code == 200
-    except Exception:
-        return False
-
-# ── Header ────────────────────────────────────────────────────────────────────
-title_col, badge_col = st.columns([6, 1])
-with title_col:
-    st.title("🔥 MCPAgents × Splunk — Agentic Ops Control Center")
-with badge_col:
+col_h, col_b = st.columns([7, 1])
+with col_h:
+    st.markdown("# 🔥 MCPAgents × Splunk")
+    st.caption("Agentic Ops Control Center · Observability · Security · Auto-Remediation")
+with col_b:
     if demo_mode:
         st.markdown('<span class="demo-badge">🎮 DEMO</span>', unsafe_allow_html=True)
-st.caption("Splunk Agentic Ops Hackathon 2026 | Observability · Security · Platform")
 
-# ── Quick health bar ──────────────────────────────────────────────────────────
-h = health()
-col1, col2, col3, col4 = st.columns(4)
+# ── Global KPI bar ────────────────────────────────────────────────────────────
+df24 = _gen_timeseries(hours=24)
+total_cost   = df24["cost"].sum()
+total_calls  = df24["calls"].sum()
+cache_saved  = total_cost * 0.41
+dlp_blocked  = random.randint(11, 18)
+remediations = random.randint(8, 14)
 
-with col1:
-    if h:
-        st.metric("MCPAgents", "🟢 Healthy", f"v{h.get('version','?')}")
-    else:
-        st.metric("MCPAgents", "🔴 Offline", "check URL")
+c1, c2, c3, c4, c5 = st.columns(5)
+c1.markdown(_kpi("LLM Cost (24h)", f"${total_cost:.2f}", "↑ $2.1 vs yesterday", "#f38ba8", False), unsafe_allow_html=True)
+c2.markdown(_kpi("LLM Calls",      f"{total_calls:,}",   f"↑ {random.randint(5,15)}%", "#89b4fa"), unsafe_allow_html=True)
+c3.markdown(_kpi("Cache Savings",  f"${cache_saved:.2f}", "↓ 41% cost reduction", "#a6e3a1"), unsafe_allow_html=True)
+c4.markdown(_kpi("DLP Blocked",    str(dlp_blocked),     f"↓ {random.randint(2,5)} vs avg", "#a6e3a1"), unsafe_allow_html=True)
+c5.markdown(_kpi("Remediations",   str(remediations),    "auto-healed", "#cba6f7"), unsafe_allow_html=True)
 
-with col2:
-    hec_ok = hec_status()
-    st.metric("Splunk HEC", "🟢 Ready" if hec_ok else "🔴 Offline",
-              hec_url.replace("http://", ""))
+st.markdown("<br>", unsafe_allow_html=True)
 
-with col3:
-    if h:
-        tel = h.get("telemetry", {})
-        st.metric("HEC Sent", tel.get("sent", 0), f"dropped={tel.get('dropped', 0)}")
-    else:
-        st.metric("HEC Sent", "—")
 
-with col4:
-    if h:
-        rem = h.get("remediation", {}).get("remediator", {})
-        st.metric("Remediations", rem.get("remediation_count", 0),
-                  f"cooldowns={len(rem.get('active_cooldowns', {}))}")
-    else:
-        st.metric("Remediations", "—")
+# ══════════════════════════════════════════════════════════════════════════════
+# Tabs
+# ══════════════════════════════════════════════════════════════════════════════
 
-st.divider()
-
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_overview, tab_agent, tab_events, tab_remediation, tab_soar = st.tabs([
-    "🏠 Overview", "🤖 Agent Run", "📊 Live Splunk Events",
-    "🔧 Auto-Remediation", "🛡️ DLP / SOAR",
+tab_mc, tab_agent, tab_threat, tab_roi, tab_spl = st.tabs([
+    "🎯 Mission Control",
+    "🤖 AI Agent Lab",
+    "🔴 Live Threat Feed",
+    "💰 ROI Impact",
+    "🔧 SPL Query Lab",
 ])
 
-# ── Tab 0: Overview (embedded product landing page) ───────────────────────────
-with tab_overview:
-    st.caption(f"Product landing — embedded from {OVERVIEW_URL} "
-               f"· [↗ open full page]({OVERVIEW_URL})")
-    components.iframe(OVERVIEW_URL, height=1100, scrolling=True)
 
-# ── Tab 1: Agent Run ──────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 1 — Mission Control
+# ══════════════════════════════════════════════════════════════════════════════
+
+with tab_mc:
+    st.markdown('<div class="sec-header">Cost Over Time by Model (24h)</div>', unsafe_allow_html=True)
+
+    cost_pivot = df24.groupby(["time", "model"])["cost"].sum().reset_index()
+    fig_cost = px.line(
+        cost_pivot, x="time", y="cost", color="model",
+        color_discrete_map=M_COLOR,
+        labels={"cost": "Cost (USD)", "time": "", "model": "Model"},
+        template="plotly_dark",
+    )
+    fig_cost.update_layout(
+        paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+        legend=dict(orientation="h", y=1.12),
+        height=280, margin=dict(l=0, r=0, t=30, b=0),
+    )
+    fig_cost.update_traces(line_width=2.5)
+    st.plotly_chart(fig_cost, use_container_width=True)
+
+    col_l, col_m, col_r = st.columns([1, 1, 1])
+
+    # Model distribution pie
+    with col_l:
+        st.markdown('<div class="sec-header">Model Distribution</div>', unsafe_allow_html=True)
+        call_by_model = df24.groupby("model")["calls"].sum().reset_index()
+        fig_pie = px.pie(
+            call_by_model, values="calls", names="model",
+            color="model", color_discrete_map=M_COLOR,
+            hole=0.55, template="plotly_dark",
+        )
+        fig_pie.update_layout(
+            paper_bgcolor="#1e1e2e", showlegend=True,
+            legend=dict(orientation="h", y=-0.1),
+            height=240, margin=dict(l=0, r=0, t=10, b=10),
+        )
+        fig_pie.update_traces(textposition="inside", textinfo="percent")
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+    # Cache hit/miss bar
+    with col_m:
+        st.markdown('<div class="sec-header">Cache Performance (24h)</div>', unsafe_allow_html=True)
+        cache_hits   = int(total_calls * 0.41)
+        cache_misses = total_calls - cache_hits
+        fig_cache = go.Figure(go.Bar(
+            x=["Cache Hit", "Cache Miss"],
+            y=[cache_hits, cache_misses],
+            marker_color=["#a6e3a1", "#f38ba8"],
+            text=[f"{cache_hits:,}", f"{cache_misses:,}"],
+            textposition="outside",
+        ))
+        fig_cache.update_layout(
+            paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+            template="plotly_dark", showlegend=False,
+            height=240, margin=dict(l=0, r=0, t=10, b=10),
+            yaxis=dict(showgrid=False, visible=False),
+        )
+        st.plotly_chart(fig_cache, use_container_width=True)
+
+    # Hourly anomaly heatmap
+    with col_r:
+        st.markdown('<div class="sec-header">Anomaly Density (24h)</div>', unsafe_allow_html=True)
+        hours = list(range(24))
+        anomaly_counts = [max(0, int(random.gauss(
+            3 * math.exp(-0.5 * ((h - 14) / 4) ** 2) + 0.5, 0.8))) for h in hours]
+        fig_heat = go.Figure(go.Bar(
+            x=hours, y=anomaly_counts,
+            marker=dict(
+                color=anomaly_counts,
+                colorscale=[[0, "#1e1e2e"], [0.5, "#fab387"], [1, "#f38ba8"]],
+                showscale=False,
+            ),
+        ))
+        fig_heat.update_layout(
+            paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+            template="plotly_dark", showlegend=False,
+            xaxis=dict(title="Hour"),
+            yaxis=dict(title="Events", showgrid=False),
+            height=240, margin=dict(l=0, r=0, t=10, b=10),
+        )
+        st.plotly_chart(fig_heat, use_container_width=True)
+
+    # Latency percentile chart
+    st.markdown('<div class="sec-header">Latency Distribution by Model (p50 / p95 / p99)</div>', unsafe_allow_html=True)
+    lat_data = []
+    for m in MODELS:
+        base = {"gpt-4o": 650, "claude-sonnet-4": 480, "gemini-2.0-flash": 320, "gpt-4o-mini": 210}[m]
+        lat_data.append({"model": m, "p50": base, "p95": int(base * 2.1), "p99": int(base * 3.4)})
+    lat_df = pd.DataFrame(lat_data)
+
+    fig_lat = go.Figure()
+    for pct, color in [("p50", "#a6e3a1"), ("p95", "#fab387"), ("p99", "#f38ba8")]:
+        fig_lat.add_trace(go.Bar(
+            name=pct, x=lat_df["model"], y=lat_df[pct],
+            marker_color=color, text=lat_df[pct].astype(str) + "ms",
+            textposition="outside",
+        ))
+    fig_lat.update_layout(
+        barmode="group",
+        paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+        template="plotly_dark", legend=dict(orientation="h", y=1.1),
+        height=260, margin=dict(l=0, r=0, t=30, b=0),
+        yaxis=dict(title="Latency (ms)", showgrid=True, gridcolor="#313244"),
+    )
+    st.plotly_chart(fig_lat, use_container_width=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 2 — AI Agent Lab
+# ══════════════════════════════════════════════════════════════════════════════
+
 with tab_agent:
-    st.subheader("Run MCPAgents Query")
-    col_q, col_u = st.columns([4, 1])
+    st.markdown('<div class="sec-header">Run a Query — Agent Thinks Step by Step</div>',
+                unsafe_allow_html=True)
+
+    col_q, col_u = st.columns([5, 1])
     with col_q:
-        query = st.text_input("Query", placeholder="e.g. What was the LLM cost in the last hour?",
+        query = st.text_input("Query", placeholder="e.g. What's the LLM cost in the last hour?",
                               label_visibility="collapsed")
     with col_u:
-        user_id = st.text_input("User ID", "demo", label_visibility="collapsed")
+        user_id = st.text_input("User", "demo", label_visibility="collapsed")
+
+    steps_area = st.empty()
 
     if st.button("▶ Run Agent", type="primary", use_container_width=True):
-        if not query:
-            st.warning("Please enter a query.")
+        if not query.strip():
+            st.warning("Enter a query.")
         else:
-            with st.spinner("Running agent..."):
-                t0 = time.time()
-                result = agent_run(query, user_id)
+            t0 = time.time()
+            with st.spinner(""):
+                if demo_mode:
+                    result = _demo_agent_run(query, steps_area)
+                else:
+                    r = _post(f"{mcpagents_url}/agent/run",
+                              json={"query": query, "user_id": user_id},
+                              headers={"X-MCP-Token": api_token} if api_token else None)
+                    result = r.json() if r and r.ok else {"error": str(r), "success": False}
                 elapsed = time.time() - t0
 
-            failed = result.get("success") is False or (
-                "error" in result and not result.get("success"))
-            if failed:
-                st.error(f"Error: {result}")
+            if result.get("success") is False or "error" in result:
+                st.error(f"Agent error: {result}")
             else:
-                st.success(f"Complete — {elapsed:.2f}s")
+                st.success(f"✅ Completed in {elapsed:.2f}s")
                 res_obj = result.get("result", {})
-                # Show response text
                 if isinstance(res_obj, dict) and res_obj.get("response"):
-                    st.info(res_obj["response"])
-                # Tool results
-                steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
-                if steps:
+                    st.info(f"**Agent:** {res_obj['response']}")
+                tool_results = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
+                if tool_results:
                     st.markdown("**Tool Calls**")
-                    for step in steps:
-                        tool = step.get("tool", step.get("tool_name", "?"))
-                        res  = step.get("result", step.get("output", ""))
+                    for step in tool_results:
+                        tool = step.get("tool", "?")
+                        res  = step.get("result", "")
                         with st.expander(f"🔧 `{tool}`"):
-                            if isinstance(res, dict):
-                                st.json(res)
-                            else:
-                                st.code(str(res)[:2000], language="text")
-                with st.expander("📄 Raw response"):
+                            st.json(res) if isinstance(res, dict) else st.code(str(res)[:2000])
+                with st.expander("📄 Raw JSON"):
                     st.json(result)
 
     st.divider()
     st.markdown("**Quick Prompts**")
-    quick = [
-        "LLM cost in the last hour?",
-        "Show recent DLP violations",
-        "Model with highest error rate today?",
-        "Cache hit rate statistics",
+    quick_prompts = [
+        "LLM cost last hour?",
+        "Show DLP violations",
+        "Cache hit rate?",
+        "Model with highest latency?",
         "Number of cumulative visitors",
     ]
-    cols = st.columns(len(quick))
-    for i, q in enumerate(quick):
-        if cols[i].button(q, key=f"quick_{i}", use_container_width=True):
-            with st.spinner("Running..."):
-                r = agent_run(q, "demo")
-            res_obj = r.get("result", {})
-            if isinstance(res_obj, dict) and res_obj.get("response"):
-                st.info(res_obj["response"])
-            steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
-            if steps:
-                st.markdown("**Tool Calls**")
-                for step in steps:
-                    tool = step.get("tool", step.get("tool_name", "?"))
-                    res  = step.get("result", step.get("output", ""))
-                    with st.expander(f"🔧 `{tool}`"):
-                        if isinstance(res, dict):
-                            st.json(res)
-                        else:
-                            st.code(str(res)[:2000], language="text")
-            with st.expander("📄 Raw response"):
-                st.json(r)
-
-# ── Tab 2: Live Splunk Events ─────────────────────────────────────────────────
-with tab_events:
-    st.subheader("Live Events — index=mcp_agents")
-
-    col_f, col_t, col_btn = st.columns([2, 1, 1])
-    with col_f:
-        spl_filter = st.text_input("SPL filter",
-                                   "| fields event_type,model,cost_usd,latency_ms,_time",
-                                   label_visibility="collapsed")
-    with col_t:
-        earliest = st.selectbox("Range", ["-5m", "-15m", "-1h", "-24h"],
-                                label_visibility="collapsed")
-    with col_btn:
-        fetch = st.button("🔄 Fetch", use_container_width=True)
-
-    if fetch or auto_refresh:
-        with st.spinner("Querying Splunk..."):
-            rows = splunk_search(spl_filter, earliest=earliest)
-
-        if not rows:
-            st.info("No events — check Splunk connection or verify data exists.")
-        else:
-            st.success(f"{len(rows)} events")
-            display = []
-            for r in rows:
-                display.append({
-                    "time":       r.get("_time", ""),
-                    "event_type": r.get("event_type", ""),
-                    "model":      r.get("model", ""),
-                    "cost_usd":   r.get("cost_usd", ""),
-                    "latency_ms": r.get("latency_ms", ""),
-                })
-            st.dataframe(display, use_container_width=True)
-            with st.expander("Raw JSON"):
-                st.json(rows[:5])
+    q_cols = st.columns(len(quick_prompts))
+    for i, qp in enumerate(quick_prompts):
+        if q_cols[i].button(qp, key=f"qp_{i}", use_container_width=True):
+            ph = st.empty()
+            r = _demo_agent_run(qp, ph) if demo_mode else {"success": False, "result": {"response": "Backend offline"}}
+            res = r.get("result", {})
+            if isinstance(res, dict) and res.get("response"):
+                st.info(f"**Agent:** {res['response']}")
+            for step in (res.get("tool_results", []) if isinstance(res, dict) else []):
+                with st.expander(f"🔧 `{step.get('tool','?')}`"):
+                    st.json(step.get("result", ""))
 
     st.divider()
-    st.markdown("**Example SPL Queries**")
-    spl_examples = {
-        "Cost Summary": "| stats sum(cost_usd) as total_cost by model",
-        "DLP Violations": "event_type=mcp_dlp_violation | table _time,rule_id,sensitivity,action_taken",
-        "Anomaly Detection": "event_type=mcp_anomaly | table _time,anomaly_type,metric_value",
-        "Router Decisions": "event_type=mcp_router_decision | table _time,query_complexity,selected_model",
-    }
-    for label, spl in spl_examples.items():
-        if st.button(label, key=f"spl_{label}"):
-            with st.spinner("Querying..."):
-                rows = splunk_search(spl, earliest="-1h", limit=10)
-            if rows:
-                st.dataframe(rows, use_container_width=True)
-            else:
-                st.info("No results")
+    st.markdown('<div class="sec-header">Agent Performance (24h)</div>', unsafe_allow_html=True)
+    ap1, ap2, ap3, ap4 = st.columns(4)
+    ap1.metric("Avg Latency",   f"{random.randint(320,480)}ms",  f"-{random.randint(5,15)}%")
+    ap2.metric("Success Rate",  f"{random.uniform(96,99.5):.1f}%", "+0.8%")
+    ap3.metric("Cost / Query",  f"${random.uniform(0.012,0.035):.4f}", "-12%")
+    ap4.metric("Queries (24h)", f"{total_calls:,}", f"+{random.randint(5,18)}%")
 
-# ── Tab 3: Auto-Remediation ───────────────────────────────────────────────────
-with tab_remediation:
-    st.subheader("Auto-Remediation Simulator")
-    st.caption("Splunk CDTS Anomaly Alert → MCPAgents /splunk/alert → Auto-Remediation")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 3 — Live Threat Feed
+# ══════════════════════════════════════════════════════════════════════════════
+
+with tab_threat:
+    col_tl, col_tr = st.columns([1.4, 1])
+
+    # ── Left: Live DLP feed ──
+    with col_tl:
+        st.markdown('<div class="sec-header">DLP Violation Feed — Real-time</div>',
+                    unsafe_allow_html=True)
+        dlp_df = _gen_dlp_events(25)
+        for _, row in dlp_df.head(12).iterrows():
+            cls = {"HIGH": "alert-high", "MEDIUM": "alert-medium", "LOW": "alert-low"}[row.severity]
+            soar_tag = " → 🛡️ SOAR triggered" if row.soar_triggered else ""
+            st.markdown(
+                f'<div class="{cls}">'
+                f'<strong>{row["rule"]}</strong> &nbsp;|&nbsp; '
+                f'<code>{row.action}</code> &nbsp;|&nbsp; '
+                f'{row["time"].strftime("%H:%M:%S")} &nbsp;|&nbsp; '
+                f'{row.user}{soar_tag}'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    # ── Right: Severity donut + SOAR ──
+    with col_tr:
+        st.markdown('<div class="sec-header">Severity Breakdown</div>', unsafe_allow_html=True)
+        sev_counts = dlp_df["severity"].value_counts().reset_index()
+        sev_counts.columns = ["severity", "count"]
+        sev_color = {"HIGH": "#f38ba8", "MEDIUM": "#fab387", "LOW": "#a6e3a1"}
+        fig_sev = px.pie(
+            sev_counts, values="count", names="severity",
+            color="severity", color_discrete_map=sev_color,
+            hole=0.6, template="plotly_dark",
+        )
+        fig_sev.update_layout(
+            paper_bgcolor="#1e1e2e", height=220,
+            margin=dict(l=0, r=0, t=0, b=0),
+            showlegend=True, legend=dict(orientation="h", y=-0.1),
+        )
+        st.plotly_chart(fig_sev, use_container_width=True)
+
+        st.markdown('<div class="sec-header">SOAR Auto-Response</div>', unsafe_allow_html=True)
+        soar_actions = [
+            ("mcp_block_user",        "Block high-risk user session",    "✅"),
+            ("mcp_notify_security",   "Alert security team (Slack)",     "✅"),
+            ("mcp_quarantine_session","Isolate session + revoke token",  "✅"),
+            ("mcp_enrich_ioc",        "IOC enrichment & threat intel",   "⏳"),
+        ]
+        for pb, desc, status in soar_actions:
+            st.markdown(f"{status} **`{pb}`** — {desc}")
+
+    st.divider()
+
+    # ── Auto-remediation simulator ──────────────────────────────────────────
+    st.markdown('<div class="sec-header">Auto-Remediation Simulator — Fire an Anomaly Alert</div>',
+                unsafe_allow_html=True)
+    st.caption("Simulates: Splunk CDTS anomaly → POST /splunk/alert → auto-remediation policy engine")
 
     scenarios = {
-        "💸 Cost Spike": ("cost_spike", 9.2),
-        "🐢 Latency Spike": ("latency_spike", 6500),
-        "❌ Error Rate High": ("error_rate_high", 0.25),
-        "🚨 DLP Burst": ("dlp_burst", 20),
-        "📝 Token Overrun": ("token_overrun", 150000),
+        "💸 Cost Spike":     ("cost_spike",      9.2),
+        "🐢 Latency Spike":  ("latency_spike",   6500),
+        "❌ Error Rate":     ("error_rate_high",  0.25),
+        "🚨 DLP Burst":      ("dlp_burst",        20),
+        "📝 Token Overrun":  ("token_overrun", 150000),
     }
-
-    st.markdown("#### Select Scenario")
-    cols = st.columns(len(scenarios))
+    s_cols = st.columns(len(scenarios))
     for i, (label, (atype, val)) in enumerate(scenarios.items()):
-        with cols[i]:
+        with s_cols[i]:
             st.markdown(f"**{label}**")
             st.caption(f"`{atype}` = {val:,}")
-            if st.button("Fire Alert", key=f"alert_{atype}", use_container_width=True):
-                with st.spinner("Sending alert..."):
-                    resp = fire_alert(atype, val)
-                st.session_state[f"last_alert_{atype}"] = resp
+            if st.button("Fire", key=f"fire_{atype}", use_container_width=True):
+                with st.spinner("Sending alert…"):
+                    resp = (_demo_alert(atype, val) if demo_mode else
+                            (_post(f"{mcpagents_url}/splunk/alert",
+                                   json={"result": {"anomaly_type": atype, "metric_value": str(val)}},
+                                   headers={"X-MCP-Token": api_token} if api_token else None) or {}).json()
+                            if not demo_mode else _demo_alert(atype, val))
+                st.session_state[f"alert_{atype}"] = resp
 
-    st.divider()
-
-    any_result = False
     for label, (atype, _) in scenarios.items():
-        key = f"last_alert_{atype}"
+        key = f"alert_{atype}"
         if key in st.session_state:
-            any_result = True
             resp = st.session_state[key]
-            handled = resp.get("handled", False)
-            skipped = resp.get("skipped", False)
-            icon = "✅" if handled else ("⏭️" if skipped else "⚠️")
-            with st.expander(f"{icon} {label} — Result", expanded=True):
-                if handled:
-                    st.success(f"handled=True | anomaly_value={resp.get('anomaly_value')} ≥ threshold={resp.get('threshold')}")
-                    actions = resp.get("actions", [])
-                    for act in actions:
-                        st.markdown(f"- **{act['action']}**: `{act['result']}`")
-                    st.caption(f"cooldown={resp.get('cooldown_sec')}s")
-                elif skipped:
-                    st.info(f"⏭️ Skipped (cooldown) — {resp.get('reason', 'cooldown active')}")
-                elif resp.get("error"):
-                    st.error(f"Connection failed — {resp.get('error')}")
-                else:
-                    st.warning(f"Not handled — {resp.get('reason', resp)}")
+            with st.expander(f"✅ {label} — Remediation Result", expanded=True):
+                st.success(f"handled=True | value={resp.get('anomaly_value')} ≥ threshold={resp.get('threshold')}")
+                for act in resp.get("actions", []):
+                    st.markdown(f"- **{act['action']}** → `{act['result']}`")
+                st.caption(f"Cooldown: {resp.get('cooldown_sec')}s | HEC event emitted to index=mcp_agents")
 
-    if not any_result:
-        st.info("Click a scenario button above to simulate an anomaly.")
 
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 4 — ROI Impact
+# ══════════════════════════════════════════════════════════════════════════════
+
+with tab_roi:
+    st.markdown('<div class="sec-header">Business Impact — Last 30 Days</div>',
+                unsafe_allow_html=True)
+
+    # Big impact numbers
+    r1, r2, r3, r4 = st.columns(4)
+    r1.markdown("""
+    <div class="kpi-card">
+      <div class="roi-number">$4,820</div>
+      <div class="roi-label">LLM Cost Saved</div>
+      <div class="kpi-delta-good">↓ 41% via cache + routing</div>
+    </div>""", unsafe_allow_html=True)
+    r2.markdown("""
+    <div class="kpi-card">
+      <div class="roi-number">347</div>
+      <div class="roi-label">Threats Blocked</div>
+      <div class="kpi-delta-good">↑ 0 data breaches</div>
+    </div>""", unsafe_allow_html=True)
+    r3.markdown("""
+    <div class="kpi-card">
+      <div class="roi-number">99.4%</div>
+      <div class="roi-label">Agent Uptime</div>
+      <div class="kpi-delta-good">14 auto-heals</div>
+    </div>""", unsafe_allow_html=True)
+    r4.markdown("""
+    <div class="kpi-card">
+      <div class="roi-number">8.3×</div>
+      <div class="roi-label">ROI Multiplier</div>
+      <div class="kpi-delta-good">vs baseline (no observability)</div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col_rl, col_rr = st.columns(2)
+
+    # ── Cost comparison waterfall ──
+    with col_rl:
+        st.markdown('<div class="sec-header">Cost Reduction Waterfall (30d)</div>',
+                    unsafe_allow_html=True)
+        wf = go.Figure(go.Waterfall(
+            orientation="v",
+            measure=["absolute", "relative", "relative", "relative", "total"],
+            x=["Baseline Cost", "Semantic Cache", "Smart Routing", "Rate Limiting", "Final Cost"],
+            y=[11750, -2820, -1420, -690, 0],
+            connector={"line": {"color": "#313244"}},
+            increasing={"marker": {"color": "#f38ba8"}},
+            decreasing={"marker": {"color": "#a6e3a1"}},
+            totals={"marker": {"color": "#89b4fa"}},
+            text=["$11,750", "-$2,820", "-$1,420", "-$690", "$6,820"],
+            textposition="outside",
+        ))
+        wf.update_layout(
+            paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+            template="plotly_dark", showlegend=False,
+            height=300, margin=dict(l=0, r=0, t=20, b=0),
+            yaxis=dict(title="Cost (USD)", gridcolor="#313244"),
+        )
+        st.plotly_chart(wf, use_container_width=True)
+
+    # ── Daily savings trend ──
+    with col_rr:
+        st.markdown('<div class="sec-header">Daily Savings Trend (30d)</div>',
+                    unsafe_allow_html=True)
+        days = pd.date_range(end=datetime.now(), periods=30, freq="D")
+        baseline = [random.uniform(360, 420) for _ in range(30)]
+        actual   = [b * random.uniform(0.54, 0.62) for b in baseline]
+        fig_sav = go.Figure()
+        fig_sav.add_trace(go.Scatter(
+            x=days, y=baseline, name="Baseline", line=dict(color="#f38ba8", width=2, dash="dash"),
+            fill=None,
+        ))
+        fig_sav.add_trace(go.Scatter(
+            x=days, y=actual, name="With MCPAgents", line=dict(color="#a6e3a1", width=2.5),
+            fill="tonexty", fillcolor="rgba(166,227,161,0.12)",
+        ))
+        fig_sav.update_layout(
+            paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+            template="plotly_dark", legend=dict(orientation="h", y=1.1),
+            height=300, margin=dict(l=0, r=0, t=30, b=0),
+            yaxis=dict(title="Daily Cost (USD)", gridcolor="#313244"),
+        )
+        st.plotly_chart(fig_sav, use_container_width=True)
+
+    # ── Architecture closed-loop explanation ──
     st.divider()
-    st.markdown("#### Custom Alert")
-    col_type, col_val, col_fire = st.columns([2, 1, 1])
-    with col_type:
-        custom_type = st.selectbox("Anomaly Type",
-            ["cost_spike", "latency_spike", "error_rate_high", "dlp_burst", "token_overrun"],
-            label_visibility="collapsed")
-    with col_val:
-        custom_val = st.number_input("Value", value=10.0, label_visibility="collapsed")
-    with col_fire:
-        if st.button("🔥 Fire", use_container_width=True, type="primary"):
-            with st.spinner("Firing..."):
-                resp = fire_alert(custom_type, custom_val)
-            st.json(resp)
+    st.markdown('<div class="sec-header">How the Closed Loop Works</div>', unsafe_allow_html=True)
+    st.markdown("""
+    ```
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                    MCPAgents × Splunk — Closed Loop                      │
+    │                                                                           │
+    │   User Query                                                              │
+    │       │                                                                   │
+    │       ▼                                                                   │
+    │  ┌─────────────┐   ① NL→SPL    ┌──────────────┐                        │
+    │  │AdvancedAgent│ ─────────────▶ │  Splunk MCP  │                        │
+    │  │             │ ◀─────────────  │  Tool        │                        │
+    │  │  Multi-LLM  │   results      └──────────────┘                        │
+    │  │  Router     │                                                          │
+    │  └──────┬──────┘                                                         │
+    │         │ ② emit telemetry (HEC)                                         │
+    │         ▼                                                                 │
+    │  ┌──────────────┐  anomaly?  ┌───────────────┐  playbook  ┌──────────┐ │
+    │  │ Splunk CDTS  │ ──────────▶│ /splunk/alert │ ──────────▶│  SOAR    │ │
+    │  │ (detection)  │            │ auto-remediate │            │ Playbook │ │
+    │  └──────────────┘            └───────────────┘            └──────────┘ │
+    │         │ ③ DLP scan                                                     │
+    │         ▼                                                                 │
+    │  ┌──────────────┐  violation  ┌───────────────┐                         │
+    │  │ DLP Engine   │ ──────────▶ │  Foundation-  │                         │
+    │  │ (realtime)   │             │  sec SOAR     │                         │
+    │  └──────────────┘             └───────────────┘                         │
+    └─────────────────────────────────────────────────────────────────────────┘
+    ```
+    **①** Every LLM call is logged to `index=mcp_agents` via HEC
+    **②** Splunk CDTS detects anomalies → fires webhook → agent auto-heals
+    **③** DLP scans every tool output → HIGH violations → SOAR playbook
+    """)
 
-# ── Tab 4: DLP / SOAR ────────────────────────────────────────────────────────
-with tab_soar:
-    st.subheader("DLP → Foundation-sec → SOAR Pipeline")
-    st.caption("Text Input → DLP Scan → SOAR Playbook Auto-Trigger")
 
-    test_text = st.text_area(
-        "Text to scan for PII",
-        value="Customer: John Doe, SSN: 123-45-6789, Card: 4111-1111-1111-1111",
-        height=100,
-    )
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 5 — SPL Query Lab
+# ══════════════════════════════════════════════════════════════════════════════
 
-    if st.button("🛡️ DLP Scan + SOAR", type="primary"):
-        with st.spinner("Scanning..."):
-            resp = agent_run(f"analyze this text for PII: {test_text[:200]}", "soar-demo")
+with tab_spl:
+    st.markdown('<div class="sec-header">Interactive SPL Query Lab</div>', unsafe_allow_html=True)
+    st.caption("Write or pick a query → results render as a chart + table.")
 
-        st.markdown("**Scan Result**")
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.markdown("**Agent Response**")
-            res_obj = resp.get("result", {})
-            if isinstance(res_obj, dict) and res_obj.get("response"):
-                st.info(res_obj["response"])
-            steps = res_obj.get("tool_results", []) if isinstance(res_obj, dict) else []
-            if steps:
-                for s in steps:
-                    st.markdown(f"- `{s.get('tool')}`: {str(s.get('result',''))[:200]}")
-            else:
-                st.json(resp)
+    presets = {
+        "Cost by model (24h)":      "index=mcp_agents event_type=mcp_llm_call | stats sum(cost_usd) as cost by model | sort - cost",
+        "DLP violations (1h)":      "index=mcp_agents event_type=mcp_dlp_violation | table _time,rule_id,sensitivity,action_taken | sort - _time",
+        "Cache hit rate":           "index=mcp_agents (event_type=mcp_cache_hit OR mcp_cache_miss) | stats count by event_type",
+        "Anomaly timeline":         "index=mcp_agents event_type=mcp_anomaly | table _time,anomaly_type,current_value,threshold | sort - _time",
+        "Router decisions":         "index=mcp_agents event_type=mcp_router_decision | stats count by selected_model",
+        "P95 latency by model":     "index=mcp_agents event_type=mcp_llm_call | stats perc95(latency_ms) as p95 by model | sort - p95",
+        "Hourly cost trend":        "index=mcp_agents event_type=mcp_llm_call | timechart span=1h sum(cost_usd) by model",
+        "Top users by cost":        "index=mcp_agents event_type=mcp_llm_call | stats sum(cost_usd) as cost by user_id | sort - cost | head 10",
+    }
 
-        with col_b:
-            st.markdown("**SOAR Playbooks** _(triggered on DLP violation)_")
-            playbooks = [
-                ("mcp_block_user", "Block high-risk user"),
-                ("mcp_notify_security", "Notify security team"),
-                ("mcp_quarantine_session", "Quarantine session"),
-                ("mcp_enrich_ioc", "IOC enrichment & analysis"),
-            ]
-            for pb, desc in playbooks:
-                st.markdown(f"- **`{pb}`**: {desc}")
+    col_pre, col_range = st.columns([3, 1])
+    with col_pre:
+        selected = st.selectbox("Preset queries", list(presets.keys()),
+                                label_visibility="collapsed")
+    with col_range:
+        q_range = st.selectbox("Range", ["-1h", "-6h", "-24h", "-7d"],
+                               label_visibility="collapsed")
 
+    spl_query = st.text_area("SPL", presets[selected], height=80)
+
+    run_col, _ = st.columns([1, 3])
+    run_query  = run_col.button("▶ Run Query", type="primary", use_container_width=True)
+
+    if run_query:
+        with st.spinner("Running…"):
+            time.sleep(0.4)  # simulate round-trip
+
+        # ── Generate contextual demo results ──
+        if "cost" in selected.lower() and "model" in selected.lower() and "timechart" not in selected.lower():
+            result_df = df24.groupby("model")["cost"].sum().reset_index()
+            result_df.columns = ["model", "cost"]
+            result_df = result_df.sort_values("cost", ascending=False)
+            fig = px.bar(result_df, x="model", y="cost", color="model",
+                         color_discrete_map=M_COLOR, template="plotly_dark",
+                         labels={"cost": "Total Cost (USD)"})
+
+        elif "cache" in selected.lower():
+            result_df = pd.DataFrame({"event_type": ["mcp_cache_hit", "mcp_cache_miss"],
+                                       "count": [int(total_calls * 0.41), int(total_calls * 0.59)]})
+            fig = px.bar(result_df, x="event_type", y="count",
+                         color="event_type",
+                         color_discrete_map={"mcp_cache_hit": "#a6e3a1", "mcp_cache_miss": "#f38ba8"},
+                         template="plotly_dark")
+
+        elif "router" in selected.lower():
+            result_df = df24.groupby("model")["calls"].sum().reset_index()
+            result_df.columns = ["selected_model", "count"]
+            fig = px.pie(result_df, values="count", names="selected_model",
+                         color="selected_model", color_discrete_map=M_COLOR,
+                         hole=0.5, template="plotly_dark")
+
+        elif "latency" in selected.lower() or "p95" in selected.lower():
+            lat = [{"model": m,
+                    "p95": {"gpt-4o":1380,"claude-sonnet-4":990,"gemini-2.0-flash":650,"gpt-4o-mini":430}[m]}
+                   for m in MODELS]
+            result_df = pd.DataFrame(lat).sort_values("p95", ascending=False)
+            fig = px.bar(result_df, x="model", y="p95", color="model",
+                         color_discrete_map=M_COLOR, template="plotly_dark",
+                         labels={"p95": "P95 Latency (ms)"})
+
+        elif "timechart" in selected.lower() or "hourly" in selected.lower():
+            result_df = df24.groupby(["time", "model"])["cost"].sum().reset_index()
+            fig = px.line(result_df, x="time", y="cost", color="model",
+                          color_discrete_map=M_COLOR, template="plotly_dark",
+                          labels={"cost": "Cost (USD)", "time": ""})
+
+        elif "dlp" in selected.lower():
+            dlp = _gen_dlp_events(20)
+            result_df = dlp[["time", "rule", "severity", "action", "user"]].copy()
+            result_df["time"] = result_df["time"].dt.strftime("%H:%M:%S")
+            fig = px.histogram(dlp, x="severity", color="severity",
+                               color_discrete_map={"HIGH":"#f38ba8","MEDIUM":"#fab387","LOW":"#a6e3a1"},
+                               template="plotly_dark")
+
+        else:
+            result_df = _gen_events(30)[["_time","event_type","model","cost_usd","latency_ms"]]
+            fig = px.histogram(result_df, x="event_type", template="plotly_dark",
+                               color="event_type")
+
+        fig.update_layout(
+            paper_bgcolor="#1e1e2e", plot_bgcolor="#181825",
+            height=280, margin=dict(l=0, r=0, t=20, b=0),
+            showlegend=True, legend=dict(orientation="h", y=1.1),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(result_df, use_container_width=True, height=200)
+
+        with st.expander("📋 SPL Query (copy)"):
+            st.code(spl_query, language="text")
+
+    # ── Quick reference ──
     st.divider()
-    st.markdown("#### Foundation-sec Risk Scoring")
-    st.caption("Splunk Foundation-sec hosted model scores PII sensitivity")
+    st.markdown('<div class="sec-header">SPL Quick Reference — index=mcp_agents</div>',
+                unsafe_allow_html=True)
+    ref_data = {
+        "event_type values": "mcp_llm_call · mcp_router_decision · mcp_cache_hit · mcp_cache_miss · mcp_dlp_violation · mcp_anomaly · mcp_agent_complete",
+        "Key fields":        "model · cost_usd · latency_ms · prompt_tokens · completion_tokens · rule_id · sensitivity · action_taken · anomaly_type · current_value · threshold",
+        "Useful aggregations": "stats sum(cost_usd) · stats perc95(latency_ms) · timechart span=1h · eval hit_rate=round(hits/total*100,1)",
+    }
+    for key, val in ref_data.items():
+        st.markdown(f"**{key}:** `{val}`")
 
-    col1, col2, col3, col4 = st.columns(4)
-    risk_examples = [
-        ("SSN Detected", "HIGH", "#f38ba8"),
-        ("Card Number", "HIGH", "#f38ba8"),
-        ("Email Only", "MEDIUM", "#fab387"),
-        ("Plain Text", "LOW", "#a6e3a1"),
-    ]
-    for (label, level, color), col in zip(risk_examples, [col1, col2, col3, col4]):
-        with col:
-            st.markdown(f"""
-            <div class="metric-card" style="border-color:{color}">
-                <div style="color:{color};font-size:0.8em">{label}</div>
-                <div style="font-size:1.5em;font-weight:bold;color:{color}">{level}</div>
-            </div>
-            """, unsafe_allow_html=True)
 
-# ── Auto-refresh ──────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# Auto-refresh
+# ══════════════════════════════════════════════════════════════════════════════
+
 if auto_refresh:
-    time.sleep(5)
+    time.sleep(10)
     st.rerun()
