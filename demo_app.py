@@ -160,6 +160,94 @@ def _gen_dlp_events(n=30):
     return pd.DataFrame(rows).sort_values("time", ascending=False)
 
 
+def _arch_diagram():
+    """Plotly closed-loop architecture diagram for ROI tab."""
+    # Color palette per node type: (fill, border)
+    C = {
+        "user":   ("#313244", "#cdd6f4"),
+        "agent":  ("#1a2744", "#89b4fa"),
+        "splunk": ("#1a3025", "#a6e3a1"),
+        "hec":    ("#2a1240", "#cba6f7"),
+        "dlp":    ("#3a1215", "#f38ba8"),
+        "cdts":   ("#1e2a40", "#89b4fa"),
+        "alert":  ("#1a3025", "#a6e3a1"),
+        "soar":   ("#3a2510", "#fab387"),
+        "fsec":   ("#3a1520", "#f38ba8"),
+    }
+
+    # Node list: (x0, y0, x1, y1, style, label_top, label_bot)
+    nodes = [
+        (3.8, 6.4, 6.2, 7.1, "user",   "👤 User Query",           ""),
+        (0.2, 4.6, 4.4, 5.7, "agent",  "🤖 AdvancedMCPAgent",    "Multi-LLM Router"),
+        (5.6, 4.6, 9.8, 5.7, "splunk", "🔍 Splunk MCP Tool",     "REST API + NL→SPL"),
+        (0.2, 2.9, 3.8, 3.9, "hec",    "📡 HEC Telemetry",       "index=mcp_agents"),
+        (6.2, 2.9, 9.8, 3.9, "dlp",    "🛡️ DLP Engine",          "Realtime PII scan"),
+        (0.2, 1.3, 3.8, 2.3, "cdts",   "🔎 Splunk CDTS",         "Anomaly Detection"),
+        (6.2, 1.3, 9.8, 2.3, "fsec",   "🏛️ Foundation-sec",      "SOAR Playbook"),
+        (2.8, 0.0, 5.8, 1.0, "alert",  "⚡ /splunk/alert",       "Auto-Remediation"),
+        (6.2, 0.0, 9.8, 1.0, "soar",   "🛡️ SOAR",               "Playbook Triggered"),
+    ]
+
+    shapes, annotations = [], []
+
+    for x0, y0, x1, y1, style, top, bot in nodes:
+        fill, border = C[style]
+        shapes.append(dict(
+            type="rect", x0=x0, y0=y0, x1=x1, y1=y1,
+            fillcolor=fill, line=dict(color=border, width=1.8),
+            xref="x", yref="y",
+        ))
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        label = f"<b>{top}</b>" + (f"<br><sub>{bot}</sub>" if bot else "")
+        annotations.append(dict(
+            x=cx, y=cy, text=label,
+            showarrow=False, xref="x", yref="y",
+            font=dict(color=border, size=11, family="monospace"),
+            align="center",
+        ))
+
+    def arrow(x0, y0, x1, y1, label="", color="#585b70", ay_off=0):
+        annotations.append(dict(
+            x=x1, y=y1, ax=x0, ay=y0,
+            xref="x", yref="y", axref="x", ayref="y",
+            showarrow=True, arrowhead=3, arrowsize=1.3,
+            arrowwidth=1.6, arrowcolor=color,
+            text=label,
+            font=dict(color=color, size=9),
+            bgcolor="rgba(17,17,27,0.7)",
+        ))
+
+    # User → Agent
+    arrow(5.0, 6.4,  2.3, 5.7,  "",          "#585b70")
+    # Agent →→ Splunk MCP (forward)
+    arrow(4.4, 5.25, 5.6, 5.35, "① NL→SPL", "#a6e3a1")
+    # Splunk MCP →→ Agent (return)
+    arrow(5.6, 5.05, 4.4, 4.95, "results ↩", "#a6e3a1")
+    # Agent → HEC  (② emit)
+    arrow(2.3, 4.6,  2.0, 3.9,  "② HEC emit", "#cba6f7")
+    # Agent → DLP  (③ scan)
+    arrow(4.4, 5.15, 6.2, 3.7,  "③ DLP scan", "#f38ba8")
+    # HEC → CDTS
+    arrow(2.0, 2.9,  2.0, 2.3,  "anomaly?",   "#89b4fa")
+    # DLP → Foundation-sec
+    arrow(8.0, 2.9,  8.0, 2.3,  "violation",  "#f38ba8")
+    # CDTS → /splunk/alert
+    arrow(3.0, 1.3,  4.0, 1.0,  "trigger",    "#fab387")
+    # /splunk/alert → SOAR
+    arrow(5.8, 0.55, 6.2, 0.55, "playbook →", "#fab387")
+
+    fig = go.Figure()
+    fig.update_layout(
+        paper_bgcolor="#181825", plot_bgcolor="#181825",
+        shapes=shapes, annotations=annotations,
+        xaxis=dict(visible=False, range=[-0.3, 10.3]),
+        yaxis=dict(visible=False, range=[-0.4, 7.6]),
+        height=480,
+        margin=dict(l=10, r=10, t=10, b=10),
+    )
+    return fig
+
+
 def _kpi(label, value, delta=None, color="#cdd6f4", delta_good=True):
     delta_html = ""
     if delta is not None:
@@ -728,38 +816,11 @@ with tab_roi:
     # ── Architecture closed-loop explanation ──
     st.divider()
     st.markdown('<div class="sec-header">How the Closed Loop Works</div>', unsafe_allow_html=True)
-    st.markdown("""
-    ```
-    ┌─────────────────────────────────────────────────────────────────────────┐
-    │                    MCPAgents × Splunk — Closed Loop                      │
-    │                                                                           │
-    │   User Query                                                              │
-    │       │                                                                   │
-    │       ▼                                                                   │
-    │  ┌─────────────┐   ① NL→SPL    ┌──────────────┐                        │
-    │  │AdvancedAgent│ ─────────────▶ │  Splunk MCP  │                        │
-    │  │             │ ◀─────────────  │  Tool        │                        │
-    │  │  Multi-LLM  │   results      └──────────────┘                        │
-    │  │  Router     │                                                          │
-    │  └──────┬──────┘                                                         │
-    │         │ ② emit telemetry (HEC)                                         │
-    │         ▼                                                                 │
-    │  ┌──────────────┐  anomaly?  ┌───────────────┐  playbook  ┌──────────┐ │
-    │  │ Splunk CDTS  │ ──────────▶│ /splunk/alert │ ──────────▶│  SOAR    │ │
-    │  │ (detection)  │            │ auto-remediate │            │ Playbook │ │
-    │  └──────────────┘            └───────────────┘            └──────────┘ │
-    │         │ ③ DLP scan                                                     │
-    │         ▼                                                                 │
-    │  ┌──────────────┐  violation  ┌───────────────┐                         │
-    │  │ DLP Engine   │ ──────────▶ │  Foundation-  │                         │
-    │  │ (realtime)   │             │  sec SOAR     │                         │
-    │  └──────────────┘             └───────────────┘                         │
-    └─────────────────────────────────────────────────────────────────────────┘
-    ```
-    **①** Every LLM call is logged to `index=mcp_agents` via HEC
-    **②** Splunk CDTS detects anomalies → fires webhook → agent auto-heals
-    **③** DLP scans every tool output → HIGH violations → SOAR playbook
-    """)
+    st.plotly_chart(_arch_diagram(), use_container_width=True)
+    col_l1, col_l2, col_l3 = st.columns(3)
+    col_l1.markdown("**① Query path** — NL query → SPL translation → Splunk search → results injected back into agent context")
+    col_l2.markdown("**② Observability loop** — Every LLM call emits HEC event → `index=mcp_agents` → CDTS anomaly detect → `/splunk/alert` → auto-remediation")
+    col_l3.markdown("**③ Security path** — DLP scans every tool output in realtime → HIGH violation → Foundation-sec SOAR playbook")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
