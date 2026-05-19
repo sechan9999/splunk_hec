@@ -943,41 +943,44 @@ with tab_spl:
 # ══════════════════════════════════════════════════════════════════════════════
 
 with tab_overview:
+    import os, re
     st.markdown('<div class="sec-header">Splunk Dashboard — LLMai Agentic Ops</div>',
                 unsafe_allow_html=True)
-    import re
-    raw = st.text_area(
-        "Splunk dashboard URL  —  or paste the full <iframe …> Embed snippet",
-        SPLUNK_DASHBOARD_URL, key="spl_embed_src", height=90,
-        help="A view URL, a Splunk Embed token URL, or the entire "
-             "<iframe src=...> snippet from Splunk's Embed dialog.")
-    _m = re.search(r'''src=["']([^"']+)["']''', raw or "")
-    spl_url = (_m.group(1) if _m else (raw or "").strip()) or SPLUNK_DASHBOARD_URL
-    st.caption(
-        "⚠️ Renders only when this Splunk is reachable from your browser "
-        "(run the app locally with Splunk up) **and** Splunk allows framing. "
-        "[↗ Open in a new tab](%s)" % spl_url
-    )
-    with st.expander("Frame blank? Two ways to make it render locally"):
-        st.markdown(
-            "**A) Splunk Embed (recommended for Dashboard Studio):**\n"
-            "Open the dashboard in Splunk → top-right **⋮ More** → **Embed** → "
-            "turn embedding on → copy the **`<iframe …>` snippet** → paste it in "
-            "the box above (this tab auto-extracts the `src`). Embed URLs are "
-            "token-signed and iframe-safe — they bypass X-Frame-Options.\n\n"
-            "**B) Disable frame-blocking on the docker Splunk (any dashboard):**\n"
-            "```\n"
-            "docker exec mcpagents-splunk bash -lc \"printf "
-            "'[settings]\\nx_frame_options_sameorigin = false\\n' >> "
-            "/opt/splunk/etc/system/local/web.conf\"\n"
-            "docker restart mcpagents-splunk\n"
-            "```\n"
-            "…then the normal view URL frames fine (~1 min to restart).\n\n"
-            "_Cloud note:_ on splunkhec.streamlit.app `localhost:8000` is the "
-            "Streamlit server, not your PC — this tab is for the **local** demo. "
-            "The submission screenshot should be the native Splunk view."
+    st.caption("Splunk Dashboard Studio over `index=mcp_agents` — closed-loop "
+               "observability: cost · routing · cache · DLP · anomaly→remediation.")
+
+    _img = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "assets", "splunk_dashboard.png")
+    if os.path.exists(_img):
+        st.image(_img, use_container_width=True,
+                 caption="Splunk Dashboard Studio — index=mcp_agents (live snapshot)")
+    else:
+        st.info(
+            "📸 Add a screenshot at `assets/splunk_dashboard.png` to show the "
+            "Splunk dashboard here. Easiest: open the dashboard in Splunk → "
+            "top-right **Download → PNG** → save it to that path → commit."
         )
-    components.iframe(spl_url, height=1200, scrolling=True)
+    st.markdown("[↗ Open the live Splunk dashboard](%s)" % SPLUNK_DASHBOARD_URL)
+
+    with st.expander("Live embed instead of snapshot (local Splunk only)"):
+        raw = st.text_area(
+            "Splunk dashboard URL  —  or paste the full <iframe …> Embed snippet",
+            SPLUNK_DASHBOARD_URL, key="spl_embed_src", height=80,
+            help="A view URL, a Splunk Embed token URL, or the entire "
+                 "<iframe src=...> snippet from Splunk's Embed dialog.")
+        _m = re.search(r'''src=["']([^"']+)["']''', raw or "")
+        spl_url = (_m.group(1) if _m else (raw or "").strip()) or SPLUNK_DASHBOARD_URL
+        st.caption(
+            "Renders only with local Splunk reachable **and** framing allowed. "
+            "Disable Splunk frame-blocking (docker): "
+            "`docker exec mcpagents-splunk bash -lc \"printf "
+            "'[settings]\\nx_frame_options_sameorigin = false\\n' >> "
+            "/opt/splunk/etc/system/local/web.conf\"` then "
+            "`docker restart mcpagents-splunk`. "
+            "Cloud note: localhost:8000 is the Streamlit server, not your PC. "
+            "[↗ Open in a new tab](%s)" % spl_url
+        )
+        components.iframe(spl_url, height=900, scrolling=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
