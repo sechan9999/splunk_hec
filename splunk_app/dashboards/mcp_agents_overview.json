@@ -124,30 +124,15 @@
     "viz_dlp_table":  { "type": "splunk.table",       "title": "DLP Violations (rule / sensitivity / action)", "dataSources": { "primary": "ds_dlp_table" } },
 
     "viz_resource_gauge": {
-      "type": "resource_gauge.resource_gauge",
-      "title": "System Health Arcs — Cost Budget / Success Rate / Error Rate",
-      "dataSources": { "primary": "ds_resource_gauge" },
-      "options": {
-        "cpuField":   "cpu_pct",
-        "memField":   "mem_pct",
-        "diskField":  "disk_pct",
-        "cpuLabel":   "Cost Budget",
-        "memLabel":   "Success Rate",
-        "diskLabel":  "Error Rate",
-        "warningThreshold":  75,
-        "criticalThreshold": 90
-      }
+      "type": "splunk.table",
+      "title": "System Health — Cost Budget % / Success Rate % / Error Rate % (last 1h)",
+      "dataSources": { "primary": "ds_resource_gauge" }
     },
 
     "viz_component_status": {
-      "type": "component_status_board.component_status_board",
+      "type": "splunk.table",
       "title": "MCPAgents Subsystem Health",
-      "dataSources": { "primary": "ds_component_static" },
-      "options": {
-        "sortOrder":  "severity",
-        "showGlow":   true,
-        "mutedOk":    true
-      }
+      "dataSources": { "primary": "ds_component_static" }
     }
   },
 

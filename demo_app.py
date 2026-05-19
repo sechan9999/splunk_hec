@@ -27,7 +27,7 @@ M_COLOR  = {"gpt-4o": "#74c7ec", "claude-sonnet-4": "#cba6f7",
              "gemini-2.0-flash": "#a6e3a1", "gpt-4o-mini": "#f9e2af"}
 M_COST   = {"gpt-4o": 0.030, "claude-sonnet-4": 0.015,
              "gemini-2.0-flash": 0.0035, "gpt-4o-mini": 0.0006}
-OVERVIEW_URL = "https://secnan9999.github.io/splunk_hec/"
+OVERVIEW_URL = "https://sechan9999.github.io/splunk_hec/"
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
