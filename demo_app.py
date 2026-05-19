@@ -945,27 +945,37 @@ with tab_spl:
 with tab_overview:
     st.markdown('<div class="sec-header">Splunk Dashboard — LLMai Agentic Ops</div>',
                 unsafe_allow_html=True)
-    spl_url = st.text_input("Splunk dashboard URL", SPLUNK_DASHBOARD_URL,
-                            help="Local Splunk Dashboard Studio view URL, or a "
-                                 "Splunk 'Embed' link/token URL.")
+    import re
+    raw = st.text_area(
+        "Splunk dashboard URL  —  or paste the full <iframe …> Embed snippet",
+        SPLUNK_DASHBOARD_URL, key="spl_embed_src", height=90,
+        help="A view URL, a Splunk Embed token URL, or the entire "
+             "<iframe src=...> snippet from Splunk's Embed dialog.")
+    _m = re.search(r'''src=["']([^"']+)["']''', raw or "")
+    spl_url = (_m.group(1) if _m else (raw or "").strip()) or SPLUNK_DASHBOARD_URL
     st.caption(
-        f"⚠️ Embedded view works only when the Splunk above is reachable from "
-        f"your browser (local Splunk) **and** Splunk allows framing. "
-        f"[↗ Open dashboard in a new tab]({spl_url})"
+        "⚠️ Renders only when this Splunk is reachable from your browser "
+        "(run the app locally with Splunk up) **and** Splunk allows framing. "
+        "[↗ Open in a new tab](%s)" % spl_url
     )
-    with st.expander("If the frame is blank — how to allow embedding"):
+    with st.expander("Frame blank? Two ways to make it render locally"):
         st.markdown(
-            "- **Cloud note:** on https://splunkhec.streamlit.app the URL "
-            "`localhost:8000` points to the Streamlit server, not your PC — "
-            "this tab only renders when you run the app **locally** with Splunk up.\n"
-            "- **Splunk blocks iframes by default** (`X-Frame-Options: SAMEORIGIN`). "
-            "Either:\n"
-            "  1. Splunk → Settings → Server settings → set `web.conf` "
-            "`[settings] x_frame_options_sameorigin = false` then restart, **or**\n"
-            "  2. In Dashboard Studio open the dashboard → ⋮ → **Embed** → use the "
-            "generated token URL above (designed to be iframe-safe).\n"
-            "- Otherwise use the **Open in a new tab** link — the dashboard itself "
-            "is the canonical Splunk view for the submission screenshot."
+            "**A) Splunk Embed (recommended for Dashboard Studio):**\n"
+            "Open the dashboard in Splunk → top-right **⋮ More** → **Embed** → "
+            "turn embedding on → copy the **`<iframe …>` snippet** → paste it in "
+            "the box above (this tab auto-extracts the `src`). Embed URLs are "
+            "token-signed and iframe-safe — they bypass X-Frame-Options.\n\n"
+            "**B) Disable frame-blocking on the docker Splunk (any dashboard):**\n"
+            "```\n"
+            "docker exec mcpagents-splunk bash -lc \"printf "
+            "'[settings]\\nx_frame_options_sameorigin = false\\n' >> "
+            "/opt/splunk/etc/system/local/web.conf\"\n"
+            "docker restart mcpagents-splunk\n"
+            "```\n"
+            "…then the normal view URL frames fine (~1 min to restart).\n\n"
+            "_Cloud note:_ on splunkhec.streamlit.app `localhost:8000` is the "
+            "Streamlit server, not your PC — this tab is for the **local** demo. "
+            "The submission screenshot should be the native Splunk view."
         )
     components.iframe(spl_url, height=1200, scrolling=True)
 
