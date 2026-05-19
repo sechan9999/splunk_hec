@@ -100,7 +100,7 @@
       "name": "Component Status — static fallback for demo",
       "options": {
         "query": "| makeresults count=6 | streamstats count as row | eval component=case(row=1,\"HEC Telemetry\",row=2,\"Splunk MCP Tool\",row=3,\"SOAR Bridge\",row=4,\"Auto-Remediation\",row=5,\"DLP Engine\",row=6,\"Multi-LLM Router\") | eval errors=0, warns=case(row=2,1,1=1,0) | eval status=if(errors>0,\"critical\",if(warns>0,\"warning\",\"ok\")) | table component errors warns status",
-        "queryParameters": { "earliest": "now", "latest": "now" }
+        "queryParameters": { "earliest": "-1m", "latest": "now" }
       }
     }
   },
