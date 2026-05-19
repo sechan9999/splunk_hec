@@ -28,6 +28,8 @@ M_COLOR  = {"gpt-4o": "#74c7ec", "claude-sonnet-4": "#cba6f7",
 M_COST   = {"gpt-4o": 0.030, "claude-sonnet-4": 0.015,
              "gemini-2.0-flash": 0.0035, "gpt-4o-mini": 0.0006}
 OVERVIEW_URL = "https://sechan9999.github.io/splunk_hec/"
+# Splunk Dashboard Studio view URL (local Splunk). Override in the Overview tab.
+SPLUNK_DASHBOARD_URL = "http://localhost:8000/en-US/app/search/llmai_agentic_ops"
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -436,12 +438,13 @@ st.markdown("<br>", unsafe_allow_html=True)
 # Tabs
 # ══════════════════════════════════════════════════════════════════════════════
 
-tab_mc, tab_agent, tab_threat, tab_roi, tab_spl = st.tabs([
+tab_mc, tab_agent, tab_threat, tab_roi, tab_spl, tab_overview = st.tabs([
     "🎯 Mission Control",
     "🤖 AI Agent Lab",
     "🔴 Live Threat Feed",
     "💰 ROI Impact",
     "🔧 SPL Query Lab",
+    "🏠 Splunk Overview",
 ])
 
 
@@ -933,6 +936,38 @@ with tab_spl:
     }
     for key, val in ref_data.items():
         st.markdown(f"**{key}:** `{val}`")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tab 6 — Splunk Overview (embedded Dashboard Studio dashboard)
+# ══════════════════════════════════════════════════════════════════════════════
+
+with tab_overview:
+    st.markdown('<div class="sec-header">Splunk Dashboard — LLMai Agentic Ops</div>',
+                unsafe_allow_html=True)
+    spl_url = st.text_input("Splunk dashboard URL", SPLUNK_DASHBOARD_URL,
+                            help="Local Splunk Dashboard Studio view URL, or a "
+                                 "Splunk 'Embed' link/token URL.")
+    st.caption(
+        f"⚠️ Embedded view works only when the Splunk above is reachable from "
+        f"your browser (local Splunk) **and** Splunk allows framing. "
+        f"[↗ Open dashboard in a new tab]({spl_url})"
+    )
+    with st.expander("If the frame is blank — how to allow embedding"):
+        st.markdown(
+            "- **Cloud note:** on https://splunkhec.streamlit.app the URL "
+            "`localhost:8000` points to the Streamlit server, not your PC — "
+            "this tab only renders when you run the app **locally** with Splunk up.\n"
+            "- **Splunk blocks iframes by default** (`X-Frame-Options: SAMEORIGIN`). "
+            "Either:\n"
+            "  1. Splunk → Settings → Server settings → set `web.conf` "
+            "`[settings] x_frame_options_sameorigin = false` then restart, **or**\n"
+            "  2. In Dashboard Studio open the dashboard → ⋮ → **Embed** → use the "
+            "generated token URL above (designed to be iframe-safe).\n"
+            "- Otherwise use the **Open in a new tab** link — the dashboard itself "
+            "is the canonical Splunk view for the submission screenshot."
+        )
+    components.iframe(spl_url, height=1200, scrolling=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
