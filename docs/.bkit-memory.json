@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-05-15T17:05:00.000Z",
+  "lastUpdated": "2026-05-18T00:00:00.000Z",
   "activeFeatures": [],
   "primaryFeature": null,
   "features": {
@@ -35,6 +35,14 @@
       "startedAt": "2026-05-15T12:00:00.000Z",
       "archivedAt": "2026-05-15T17:12:00.000Z",
       "archivedTo": "docs/archive/2026-05/splunk-hec-emitter/"
+    },
+    "MCPagents-splunk": {
+      "phase": "archived",
+      "matchRate": 100,
+      "iterationCount": 1,
+      "startedAt": "2026-05-15T12:23:25.755Z",
+      "archivedAt": "2026-05-18T00:00:00.000Z",
+      "archivedTo": "docs/archive/2026-05/MCPagents-splunk/"
     }
   },
   "pipeline": {
@@ -60,9 +68,9 @@
       "at": "2026-05-15T12:00:00.000Z"
     }
   ],
-  "sessionCount": 3,
+  "sessionCount": 7,
   "lastSession": {
-    "startedAt": "2026-05-15T17:32:11.514Z",
+    "startedAt": "2026-05-18T21:01:41.951Z",
     "platform": "claude",
     "level": "Enterprise"
   }

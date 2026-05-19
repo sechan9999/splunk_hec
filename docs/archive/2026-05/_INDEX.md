@@ -7,3 +7,4 @@
 | splunk-mcp-tool | 100% | 2026-05-15 | [docs](splunk-mcp-tool/) |
 | splunk-hec-emitter | 96% | 2026-05-15 | [docs](splunk-hec-emitter/) |
 | endpoint-auth | 100% | 2026-05-16 | [docs](endpoint-auth/) |
+| MCPagents-splunk | 100% | 2026-05-18 | [docs](MCPagents-splunk/) |
