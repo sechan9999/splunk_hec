@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>Hybrid Recommender Local Demo</title>
+<style>
+  :root {
+    --bg: #F6F7F5; --surface: #FFFFFF; --ink: #20262E; --muted: #5B6470;
+    --line: #E2E5E1; --accent: #3D6FC4; --accent-ink: #FFFFFF;
+    --bar-neutral: #C9CFCA;
+    --sig-cf: #4A7FD4; --sig-ct: #3E9E6E; --sig-pop: #D6A23E; --sig-ctx: #9070CC;
+    --chip-bg: #ECEEEA; --code-bg: #EEF0EC;
+    --display: Charter, Georgia, 'Times New Roman', serif;
+    --body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14181D; --surface: #1C2229; --ink: #E8EAED; --muted: #98A1AB;
+      --line: #2A323B; --accent: #6B9AE8; --accent-ink: #10151B;
+      --bar-neutral: #3C4652;
+      --sig-cf: #5E8EDF; --sig-ct: #47A876; --sig-pop: #B8892F; --sig-ctx: #9C7DD6;
+      --chip-bg: #242C35; --code-bg: #10151B;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14181D; --surface: #1C2229; --ink: #E8EAED; --muted: #98A1AB;
+    --line: #2A323B; --accent: #6B9AE8; --accent-ink: #10151B;
+    --bar-neutral: #3C4652;
+    --sig-cf: #5E8EDF; --sig-ct: #47A876; --sig-pop: #B8892F; --sig-ctx: #9C7DD6;
+    --chip-bg: #242C35; --code-bg: #10151B;
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F7F5; --surface: #FFFFFF; --ink: #20262E; --muted: #5B6470;
+    --line: #E2E5E1; --accent: #3D6FC4; --accent-ink: #FFFFFF;
+    --bar-neutral: #C9CFCA;
+    --sig-cf: #4A7FD4; --sig-ct: #3E9E6E; --sig-pop: #D6A23E; --sig-ctx: #9070CC;
+    --chip-bg: #ECEEEA; --code-bg: #EEF0EC;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--body); font-size: 15.5px; line-height: 1.55;
+    margin: 0; padding: 48px 20px 72px;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--display); font-size: clamp(30px, 5vw, 42px);
+    line-height: 1.12; margin: 0 0 12px; font-weight: 700; text-wrap: balance;
+  }
+  .lede { color: var(--muted); max-width: 62ch; margin: 0 0 18px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .meta-chip {
+    font-family: var(--mono); font-size: 12px; padding: 4px 10px;
+    background: var(--chip-bg); border-radius: 999px; color: var(--muted);
+  }
+
+  section { margin-top: 52px; }
+  h2 {
+    font-family: var(--display); font-size: 24px; font-weight: 700;
+    margin: 0 0 6px; text-wrap: balance;
+  }
+  .section-note { color: var(--muted); font-size: 14px; margin: 0 0 20px; max-width: 68ch; }
+
+  /* ---- metrics panels ---- */
+  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 18px 14px;
+  }
+  .panel h3 {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 14px; font-weight: 600;
+  }
+  .brow { display: grid; grid-template-columns: 92px 1fr 52px; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .brow .label { font-size: 13px; color: var(--muted); }
+  .brow.win .label { color: var(--ink); font-weight: 600; }
+  .btrack { height: 20px; position: relative; }
+  .bfill {
+    height: 100%; border-radius: 0 4px 4px 0; background: var(--bar-neutral);
+    min-width: 3px; transition: width .4s ease;
+  }
+  .brow.win .bfill { background: var(--accent); }
+  .brow .val {
+    font-family: var(--mono); font-size: 13px; text-align: right;
+    font-variant-numeric: tabular-nums; color: var(--muted);
+  }
+  .brow.win .val { color: var(--ink); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .bfill { transition: none; } }
+
+  details { margin-top: 14px; }
+  summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  table { border-collapse: collapse; margin-top: 10px; font-size: 13.5px; width: 100%; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; font-family: var(--mono); font-size: 12.5px; }
+  th { color: var(--muted); font-weight: 600; }
+
+  /* ---- demo ---- */
+  .controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .ctl-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .ctl-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); min-width: 64px;
+  }
+  .chip {
+    font-family: var(--body); font-size: 13px; padding: 6px 13px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+    color: var(--ink); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chip[aria-pressed="true"] {
+    background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600;
+  }
+  .chip .sub { opacity: 0.7; font-size: 12px; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 4px 0 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+  .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  .recs { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .rec { padding: 13px 18px 15px; border-bottom: 1px solid var(--line); }
+  .rec:last-child { border-bottom: none; }
+  .rec-top { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; flex-wrap: wrap; }
+  .rank { font-family: var(--mono); font-size: 12px; color: var(--muted); width: 16px; }
+  .item-id { font-family: var(--mono); font-size: 14px; font-weight: 600; }
+  .cat {
+    font-size: 12px; padding: 2px 9px; background: var(--chip-bg);
+    border-radius: 999px; color: var(--muted);
+  }
+  .score { margin-left: auto; font-family: var(--mono); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .stack { display: flex; gap: 2px; height: 12px; border-radius: 4px; overflow: hidden; cursor: default; }
+  .seg { height: 100%; min-width: 2px; }
+  .seg.cf  { background: var(--sig-cf); }
+  .seg.ct  { background: var(--sig-ct); }
+  .seg.pop { background: var(--sig-pop); }
+  .seg.ctx { background: var(--sig-ctx); }
+  .cold-note {
+    font-size: 13px; color: var(--muted); font-style: italic;
+  }
+  .fallback-banner {
+    padding: 11px 18px; font-size: 13.5px; color: var(--muted);
+    background: var(--chip-bg); border-bottom: 1px solid var(--line);
+  }
+
+  #tip {
+    position: fixed; pointer-events: none; z-index: 10; display: none;
+    background: var(--ink); color: var(--bg); border-radius: 8px;
+    padding: 9px 12px; font-size: 12.5px; line-height: 1.5;
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25); max-width: 240px;
+  }
+  #tip b { font-weight: 700; }
+
+  /* ---- equation ---- */
+  .equation {
+    font-family: var(--mono); font-size: 14.5px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+    overflow-x: auto; white-space: nowrap;
+  }
+  .equation .t-cf { color: var(--sig-cf); font-weight: 700; }
+  .equation .t-ct { color: var(--sig-ct); font-weight: 700; }
+  .equation .t-pop { color: var(--sig-pop); font-weight: 700; }
+  .equation .t-ctx { color: var(--sig-ctx); font-weight: 700; }
+
+  /* ---- split diagram ---- */
+  .split { display: flex; gap: 2px; height: 34px; border-radius: 6px; overflow: hidden; margin: 14px 0 6px; }
+  .split div {
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11.5px; color: var(--ink);
+  }
+  .split .tr { flex: 70; background: var(--chip-bg); }
+  .split .va { flex: 10; background: var(--bar-neutral); }
+  .split .te { flex: 10; background: var(--accent); color: var(--accent-ink); }
+  .split-caption { font-size: 13px; color: var(--muted); }
+
+  /* ---- commands ---- */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; font-family: var(--mono);
+    font-size: 13px; line-height: 1.7; margin: 0;
+  }
+  pre .c { color: var(--muted); }
+
+  footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  footer code { font-family: var(--mono); font-size: 12px; }
+</style>
+
+<main>
+  <p class="eyebrow">splunk_hec / recommender · local demo · 2026-07-14</p>
+  <h1>Hybrid Recommender, running on this machine</h1>
+  <p class="lede">
+    Every recommendation below is real output from the <code style="font-family:var(--mono);font-size:14px">recommender/</code>
+    package on your disk — one model blending collaborative filtering, content features,
+    popularity, and context into a single ranked list.
+  </p>
+  <div class="meta-row">
+    <span class="meta-chip">commit 56d3fca</span>
+    <span class="meta-chip">tests 7/7 pass</span>
+    <span class="meta-chip">1,200 users · 300 items · 100K events</span>
+  </div>
+
+  <section>
+    <h2>Offline results</h2>
+    <p class="section-note">
+      Temporal holdout, K=10. The hybrid model roughly doubles NDCG against the
+      popularity baseline while recommending 2.5× more of the catalog.
+    </p>
+    <div class="panels">
+      <div class="panel">
+        <h3>NDCG@10</h3>
+        <div id="ndcg-chart"></div>
+      </div>
+      <div class="panel">
+        <h3>Recall@10</h3>
+        <div id="recall-chart"></div>
+      </div>
+    </div>
+    <details>
+      <summary>All metrics as a table</summary>
+      <table>
+        <thead><tr><th>model</th><th>recall@10</th><th>ndcg@10</th><th>coverage@10</th></tr></thead>
+        <tbody>
+          <tr><td>popularity</td><td>0.103</td><td>0.058</td><td>0.30</td></tr>
+          <tr><td>item_cf</td><td>0.142</td><td>0.075</td><td>0.99</td></tr>
+          <tr><td>content</td><td>0.149</td><td>0.078</td><td>0.72</td></tr>
+          <tr><td>hybrid_contextual</td><td>0.186</td><td>0.114</td><td>0.74</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </section>
+
+  <section>
+    <h2>Try it: one user, four contexts</h2>
+    <p class="section-note">
+      Pick a user and a context. The stacked bar under each item shows <em>why</em> it
+      ranked there — the weighted contribution of each signal. Hover a bar for exact values.
+      Watch the fashion shopper's list reshuffle between mobile-evening and desktop-day.
+    </p>
+    <div class="controls">
+      <div class="ctl-row"><span class="ctl-label">User</span><span id="user-chips" class="ctl-row" style="gap:8px"></span></div>
+      <div class="ctl-row"><span class="ctl-label">Context</span><span id="ctx-chips" class="ctl-row" style="gap:8px"></span></div>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--sig-cf)"></i>Collaborative filtering</span>
+      <span><i class="sw" style="background:var(--sig-ct)"></i>Content match</span>
+      <span><i class="sw" style="background:var(--sig-pop)"></i>Popularity</span>
+      <span><i class="sw" style="background:var(--sig-ctx)"></i>Context</span>
+    </div>
+    <div id="recs" class="recs"></div>
+    <div id="tip" role="presentation"></div>
+  </section>
+
+  <section>
+    <h2>The blend</h2>
+    <p class="section-note">
+      Serving weights below are the defaults; <code style="font-family:var(--mono);font-size:13.5px">run_eval</code>
+      re-tunes them by grid search on a validation window each training run.
+      Cold-start users skip CF and content entirely.
+    </p>
+    <div class="equation">
+      score(u, i) &nbsp;=&nbsp;
+      <span class="t-cf">0.50 · CF</span> +
+      <span class="t-ct">0.20 · Content</span> +
+      <span class="t-pop">0.10 · Popularity</span> +
+      <span class="t-ctx">0.20 · Context</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Evaluation protocol</h2>
+    <div class="split">
+      <div class="tr">train · day 0–70</div>
+      <div class="va" title="validation">val</div>
+      <div class="te" title="test">test</div>
+    </div>
+    <p class="split-caption">
+      Strict temporal split — weights tuned on days 70–80, reported on days 80–90.
+      Ground truth = click-or-stronger events on items the user never saw in training. No leakage.
+    </p>
+  </section>
+
+  <section>
+    <h2>Run it yourself</h2>
+    <pre><span class="c"># from the splunk_hec repo root</span>
+python -m recommender.run_eval          <span class="c"># train all 4 models, print comparison</span>
+python -m pytest tests/test_recommender.py -q
+uvicorn recommender.service:app --port 8100
+curl -X POST localhost:8100/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 42, "device": "mobile", "hour_bucket": "evening", "k": 5}'</pre>
+  </section>
+
+  <footer>
+    <span>package <code>recommender/</code></span>
+    <span>docs <code>docs/01-plan · 02-design · 03-analysis</code></span>
+    <span>repo <code>sechan9999/splunk_hec@master</code></span>
+  </footer>
+</main>
+
+<script>
+const DATA = {"users": [{"user_id": 5, "segment": "budget", "n_events": 18, "top_categories": ["grocery", "home", "books"], "recs": {"mobile|evening": [{"item_id": 9, "score": 0.72, "category": "grocery", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0064, "context": 0.0133}}, {"item_id": 18, "score": 0.642, "category": "toys", "tier": 2, "reason": {"cf": 0.4991, "content": 0.1066, "popularity": 0.0083, "context": 0.0283}}, {"item_id": 2, "score": 0.64, "category": "grocery", "tier": 1, "reason": {"cf": 0.4986, "content": 0.1207, "popularity": 0.0074, "context": 0.0133}}, {"item_id": 125, "score": 0.635, "category": "fashion", "tier": 3, "reason": {"cf": 0.3038, "content": 0.11, "popularity": 0.0216, "context": 0.2}}, {"item_id": 192, "score": 0.63, "category": "grocery", "tier": 2, "reason": {"cf": 0.4374, "content": 0.173, "popularity": 0.0058, "context": 0.0133}}], "mobile|morning": [{"item_id": 9, "score": 0.906, "category": "grocery", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0064, "context": 0.2}}, {"item_id": 2, "score": 0.827, "category": "grocery", "tier": 1, "reason": {"cf": 0.4986, "content": 0.1207, "popularity": 0.0074, "context": 0.2}}, {"item_id": 192, "score": 0.816, "category": "grocery", "tier": 2, "reason": {"cf": 0.4374, "content": 0.173, "popularity": 0.0058, "context": 0.2}}, {"item_id": 86, "score": 0.814, "category": "grocery", "tier": 3, "reason": {"cf": 0.4102, "content": 0.2, "popularity": 0.004, "context": 0.2}}, {"item_id": 170, "score": 0.81, "category": "grocery", "tier": 3, "reason": {"cf": 0.3992, "content": 0.2, "popularity": 0.011, "context": 0.2}}], "desktop|day": [{"item_id": 93, "score": 0.711, "category": "electronics", "tier": 1, "reason": {"cf": 0.4707, "content": 0.0333, "popularity": 0.0073, "context": 0.2}}, {"item_id": 9, "score": 0.706, "category": "grocery", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0064, "context": 0.0}}, {"item_id": 245, "score": 0.706, "category": "electronics", "tier": 3, "reason": {"cf": 0.3649, "content": 0.1348, "popularity": 0.0065, "context": 0.2}}, {"item_id": 18, "score": 0.648, "category": "toys", "tier": 2, "reason": {"cf": 0.4991, "content": 0.1066, "popularity": 0.0083, "context": 0.0339}}, {"item_id": 249, "score": 0.641, "category": "electronics", "tier": 3, "reason": {"cf": 0.3, "content": 0.1348, "popularity": 0.0058, "context": 0.2}}], "desktop|night": [{"item_id": 9, "score": 0.84, "category": "grocery", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0064, "context": 0.1337}}, {"item_id": 18, "score": 0.814, "category": "toys", "tier": 2, "reason": {"cf": 0.4991, "content": 0.1066, "popularity": 0.0083, "context": 0.2}}, {"item_id": 113, "score": 0.783, "category": "toys", "tier": 3, "reason": {"cf": 0.438, "content": 0.1435, "popularity": 0.0013, "context": 0.2}}, {"item_id": 2, "score": 0.76, "category": "grocery", "tier": 1, "reason": {"cf": 0.4986, "content": 0.1207, "popularity": 0.0074, "context": 0.1337}}, {"item_id": 192, "score": 0.75, "category": "grocery", "tier": 2, "reason": {"cf": 0.4374, "content": 0.173, "popularity": 0.0058, "context": 0.1337}}]}}, {"user_id": 21, "segment": "fashion", "n_events": 21, "top_categories": ["fashion", "sports", "beauty"], "recs": {"mobile|evening": [{"item_id": 163, "score": 0.891, "category": "fashion", "tier": 2, "reason": {"cf": 0.4908, "content": 0.1906, "popularity": 0.0101, "context": 0.2}}, {"item_id": 64, "score": 0.885, "category": "fashion", "tier": 2, "reason": {"cf": 0.4763, "content": 0.1906, "popularity": 0.0186, "context": 0.2}}, {"item_id": 50, "score": 0.884, "category": "fashion", "tier": 1, "reason": {"cf": 0.5, "content": 0.1623, "popularity": 0.0213, "context": 0.2}}, {"item_id": 144, "score": 0.858, "category": "fashion", "tier": 1, "reason": {"cf": 0.4897, "content": 0.1623, "popularity": 0.0064, "context": 0.2}}, {"item_id": 87, "score": 0.858, "category": "fashion", "tier": 1, "reason": {"cf": 0.4763, "content": 0.1623, "popularity": 0.0193, "context": 0.2}}], "mobile|morning": [{"item_id": 163, "score": 0.696, "category": "fashion", "tier": 2, "reason": {"cf": 0.4908, "content": 0.1906, "popularity": 0.0101, "context": 0.0047}}, {"item_id": 64, "score": 0.69, "category": "fashion", "tier": 2, "reason": {"cf": 0.4763, "content": 0.1906, "popularity": 0.0186, "context": 0.0047}}, {"item_id": 50, "score": 0.688, "category": "fashion", "tier": 1, "reason": {"cf": 0.5, "content": 0.1623, "popularity": 0.0213, "context": 0.0047}}, {"item_id": 144, "score": 0.663, "category": "fashion", "tier": 1, "reason": {"cf": 0.4897, "content": 0.1623, "popularity": 0.0064, "context": 0.0047}}, {"item_id": 87, "score": 0.663, "category": "fashion", "tier": 1, "reason": {"cf": 0.4763, "content": 0.1623, "popularity": 0.0193, "context": 0.0047}}], "desktop|day": [{"item_id": 163, "score": 0.707, "category": "fashion", "tier": 2, "reason": {"cf": 0.4908, "content": 0.1906, "popularity": 0.0101, "context": 0.0152}}, {"item_id": 64, "score": 0.701, "category": "fashion", "tier": 2, "reason": {"cf": 0.4763, "content": 0.1906, "popularity": 0.0186, "context": 0.0152}}, {"item_id": 50, "score": 0.699, "category": "fashion", "tier": 1, "reason": {"cf": 0.5, "content": 0.1623, "popularity": 0.0213, "context": 0.0152}}, {"item_id": 144, "score": 0.674, "category": "fashion", "tier": 1, "reason": {"cf": 0.4897, "content": 0.1623, "popularity": 0.0064, "context": 0.0152}}, {"item_id": 87, "score": 0.673, "category": "fashion", "tier": 1, "reason": {"cf": 0.4763, "content": 0.1623, "popularity": 0.0193, "context": 0.0152}}], "desktop|night": [{"item_id": 163, "score": 0.691, "category": "fashion", "tier": 2, "reason": {"cf": 0.4908, "content": 0.1906, "popularity": 0.0101, "context": 0.0}}, {"item_id": 64, "score": 0.685, "category": "fashion", "tier": 2, "reason": {"cf": 0.4763, "content": 0.1906, "popularity": 0.0186, "context": 0.0}}, {"item_id": 50, "score": 0.684, "category": "fashion", "tier": 1, "reason": {"cf": 0.5, "content": 0.1623, "popularity": 0.0213, "context": 0.0}}, {"item_id": 144, "score": 0.658, "category": "fashion", "tier": 1, "reason": {"cf": 0.4897, "content": 0.1623, "popularity": 0.0064, "context": 0.0}}, {"item_id": 87, "score": 0.658, "category": "fashion", "tier": 1, "reason": {"cf": 0.4763, "content": 0.1623, "popularity": 0.0193, "context": 0.0}}]}}, {"user_id": 2, "segment": "home", "n_events": 14, "top_categories": ["books", "grocery", "home"], "recs": {"mobile|evening": [{"item_id": 34, "score": 0.725, "category": "books", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0046, "context": 0.0204}}, {"item_id": 73, "score": 0.531, "category": "books", "tier": 3, "reason": {"cf": 0.3032, "content": 0.2, "popularity": 0.0072, "context": 0.0204}}, {"item_id": 248, "score": 0.531, "category": "books", "tier": 3, "reason": {"cf": 0.2997, "content": 0.2, "popularity": 0.0105, "context": 0.0204}}, {"item_id": 116, "score": 0.528, "category": "books", "tier": 3, "reason": {"cf": 0.3014, "content": 0.2, "popularity": 0.0065, "context": 0.0204}}, {"item_id": 197, "score": 0.524, "category": "books", "tier": 1, "reason": {"cf": 0.3468, "content": 0.152, "popularity": 0.0053, "context": 0.0204}}], "mobile|morning": [{"item_id": 34, "score": 0.709, "category": "books", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0046, "context": 0.0042}}, {"item_id": 58, "score": 0.67, "category": "beauty", "tier": 3, "reason": {"cf": 0.4061, "content": 0.1022, "popularity": 0.0025, "context": 0.1589}}, {"item_id": 179, "score": 0.657, "category": "beauty", "tier": 2, "reason": {"cf": 0.4235, "content": 0.0712, "popularity": 0.0038, "context": 0.1589}}, {"item_id": 168, "score": 0.636, "category": "grocery", "tier": 2, "reason": {"cf": 0.3128, "content": 0.1108, "popularity": 0.0126, "context": 0.2}}, {"item_id": 195, "score": 0.63, "category": "beauty", "tier": 3, "reason": {"cf": 0.3623, "content": 0.1022, "popularity": 0.0067, "context": 0.1589}}], "desktop|day": [{"item_id": 34, "score": 0.717, "category": "books", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0046, "context": 0.0127}}, {"item_id": 165, "score": 0.643, "category": "electronics", "tier": 2, "reason": {"cf": 0.369, "content": 0.062, "popularity": 0.0123, "context": 0.2}}, {"item_id": 265, "score": 0.583, "category": "electronics", "tier": 3, "reason": {"cf": 0.2716, "content": 0.0944, "popularity": 0.0172, "context": 0.2}}, {"item_id": 58, "score": 0.57, "category": "beauty", "tier": 3, "reason": {"cf": 0.4061, "content": 0.1022, "popularity": 0.0025, "context": 0.059}}, {"item_id": 88, "score": 0.566, "category": "electronics", "tier": 3, "reason": {"cf": 0.2663, "content": 0.0944, "popularity": 0.005, "context": 0.2}}], "desktop|night": [{"item_id": 34, "score": 0.779, "category": "books", "tier": 3, "reason": {"cf": 0.5, "content": 0.2, "popularity": 0.0046, "context": 0.0739}}, {"item_id": 58, "score": 0.695, "category": "beauty", "tier": 3, "reason": {"cf": 0.4061, "content": 0.1022, "popularity": 0.0025, "context": 0.1838}}, {"item_id": 179, "score": 0.682, "category": "beauty", "tier": 2, "reason": {"cf": 0.4235, "content": 0.0712, "popularity": 0.0038, "context": 0.1838}}, {"item_id": 195, "score": 0.655, "category": "beauty", "tier": 3, "reason": {"cf": 0.3623, "content": 0.1022, "popularity": 0.0067, "context": 0.1838}}, {"item_id": 241, "score": 0.647, "category": "beauty", "tier": 3, "reason": {"cf": 0.3547, "content": 0.1022, "popularity": 0.0062, "context": 0.1838}}]}}, {"user_id": 3, "segment": "sports", "n_events": 10, "top_categories": ["sports", "books", "beauty"], "recs": {"mobile|evening": [{"item_id": 209, "score": 0.823, "category": "sports", "tier": 1, "reason": {"cf": 0.4381, "content": 0.1517, "popularity": 0.1, "context": 0.1328}}, {"item_id": 258, "score": 0.811, "category": "sports", "tier": 2, "reason": {"cf": 0.438, "content": 0.1861, "popularity": 0.0546, "context": 0.1328}}, {"item_id": 228, "score": 0.805, "category": "sports", "tier": 2, "reason": {"cf": 0.4379, "content": 0.1861, "popularity": 0.048, "context": 0.1328}}, {"item_id": 187, "score": 0.803, "category": "sports", "tier": 2, "reason": {"cf": 0.4377, "content": 0.1861, "popularity": 0.0466, "context": 0.1328}}, {"item_id": 48, "score": 0.802, "category": "sports", "tier": 2, "reason": {"cf": 0.4379, "content": 0.1861, "popularity": 0.0449, "context": 0.1328}}], "mobile|morning": [{"item_id": 246, "score": 0.764, "category": "grocery", "tier": 3, "reason": {"cf": 0.4494, "content": 0.1075, "popularity": 0.0069, "context": 0.2}}, {"item_id": 94, "score": 0.752, "category": "grocery", "tier": 3, "reason": {"cf": 0.4409, "content": 0.1075, "popularity": 0.0033, "context": 0.2}}, {"item_id": 32, "score": 0.744, "category": "grocery", "tier": 3, "reason": {"cf": 0.4273, "content": 0.1075, "popularity": 0.0091, "context": 0.2}}, {"item_id": 183, "score": 0.739, "category": "grocery", "tier": 3, "reason": {"cf": 0.4261, "content": 0.1075, "popularity": 0.0054, "context": 0.2}}, {"item_id": 274, "score": 0.73, "category": "grocery", "tier": 3, "reason": {"cf": 0.4208, "content": 0.1075, "popularity": 0.0018, "context": 0.2}}], "desktop|day": [{"item_id": 209, "score": 0.735, "category": "sports", "tier": 1, "reason": {"cf": 0.4381, "content": 0.1517, "popularity": 0.1, "context": 0.0455}}, {"item_id": 258, "score": 0.724, "category": "sports", "tier": 2, "reason": {"cf": 0.438, "content": 0.1861, "popularity": 0.0546, "context": 0.0455}}, {"item_id": 228, "score": 0.717, "category": "sports", "tier": 2, "reason": {"cf": 0.4379, "content": 0.1861, "popularity": 0.048, "context": 0.0455}}, {"item_id": 187, "score": 0.716, "category": "sports", "tier": 2, "reason": {"cf": 0.4377, "content": 0.1861, "popularity": 0.0466, "context": 0.0455}}, {"item_id": 48, "score": 0.714, "category": "sports", "tier": 2, "reason": {"cf": 0.4379, "content": 0.1861, "popularity": 0.0449, "context": 0.0455}}], "desktop|night": [{"item_id": 77, "score": 0.805, "category": "toys", "tier": 3, "reason": {"cf": 0.4977, "content": 0.105, "popularity": 0.0026, "context": 0.2}}, {"item_id": 209, "score": 0.803, "category": "sports", "tier": 1, "reason": {"cf": 0.4381, "content": 0.1517, "popularity": 0.1, "context": 0.113}}, {"item_id": 258, "score": 0.792, "category": "sports", "tier": 2, "reason": {"cf": 0.438, "content": 0.1861, "popularity": 0.0546, "context": 0.113}}, {"item_id": 228, "score": 0.785, "category": "sports", "tier": 2, "reason": {"cf": 0.4379, "content": 0.1861, "popularity": 0.048, "context": 0.113}}, {"item_id": 187, "score": 0.783, "category": "sports", "tier": 2, "reason": {"cf": 0.4377, "content": 0.1861, "popularity": 0.0466, "context": 0.113}}]}}, {"user_id": 6, "segment": "tech", "n_events": 14, "top_categories": ["electronics", "grocery", "beauty"], "recs": {"mobile|evening": [{"item_id": 125, "score": 0.71, "category": "fashion", "tier": 3, "reason": {"cf": 0.3836, "content": 0.1047, "popularity": 0.0216, "context": 0.2}}, {"item_id": 12, "score": 0.677, "category": "home", "tier": 3, "reason": {"cf": 0.5, "content": 0.1162, "popularity": 0.0086, "context": 0.0525}}, {"item_id": 90, "score": 0.621, "category": "fashion", "tier": 3, "reason": {"cf": 0.3075, "content": 0.1047, "popularity": 0.0087, "context": 0.2}}, {"item_id": 86, "score": 0.608, "category": "grocery", "tier": 3, "reason": {"cf": 0.4091, "content": 0.1819, "popularity": 0.004, "context": 0.0133}}, {"item_id": 204, "score": 0.608, "category": "fashion", "tier": 3, "reason": {"cf": 0.2954, "content": 0.1047, "popularity": 0.0079, "context": 0.2}}], "mobile|morning": [{"item_id": 86, "score": 0.795, "category": "grocery", "tier": 3, "reason": {"cf": 0.4091, "content": 0.1819, "popularity": 0.004, "context": 0.2}}, {"item_id": 32, "score": 0.791, "category": "grocery", "tier": 3, "reason": {"cf": 0.3995, "content": 0.1819, "popularity": 0.0091, "context": 0.2}}, {"item_id": 174, "score": 0.79, "category": "grocery", "tier": 3, "reason": {"cf": 0.3986, "content": 0.1819, "popularity": 0.0098, "context": 0.2}}, {"item_id": 175, "score": 0.785, "category": "grocery", "tier": 3, "reason": {"cf": 0.3966, "content": 0.1819, "popularity": 0.0064, "context": 0.2}}, {"item_id": 246, "score": 0.785, "category": "grocery", "tier": 3, "reason": {"cf": 0.3961, "content": 0.1819, "popularity": 0.0069, "context": 0.2}}], "desktop|day": [{"item_id": 12, "score": 0.764, "category": "home", "tier": 3, "reason": {"cf": 0.5, "content": 0.1162, "popularity": 0.0086, "context": 0.1396}}, {"item_id": 173, "score": 0.694, "category": "home", "tier": 3, "reason": {"cf": 0.4232, "content": 0.1162, "popularity": 0.0147, "context": 0.1396}}, {"item_id": 279, "score": 0.688, "category": "home", "tier": 3, "reason": {"cf": 0.426, "content": 0.1162, "popularity": 0.0062, "context": 0.1396}}, {"item_id": 230, "score": 0.667, "category": "home", "tier": 3, "reason": {"cf": 0.3959, "content": 0.1162, "popularity": 0.0155, "context": 0.1396}}, {"item_id": 211, "score": 0.663, "category": "beauty", "tier": 2, "reason": {"cf": 0.4796, "content": 0.1181, "popularity": 0.0065, "context": 0.059}}], "desktop|night": [{"item_id": 211, "score": 0.788, "category": "beauty", "tier": 2, "reason": {"cf": 0.4796, "content": 0.1181, "popularity": 0.0065, "context": 0.1838}}, {"item_id": 12, "score": 0.783, "category": "home", "tier": 3, "reason": {"cf": 0.5, "content": 0.1162, "popularity": 0.0086, "context": 0.1579}}, {"item_id": 86, "score": 0.729, "category": "grocery", "tier": 3, "reason": {"cf": 0.4091, "content": 0.1819, "popularity": 0.004, "context": 0.1337}}, {"item_id": 32, "score": 0.724, "category": "grocery", "tier": 3, "reason": {"cf": 0.3995, "content": 0.1819, "popularity": 0.0091, "context": 0.1337}}, {"item_id": 174, "score": 0.724, "category": "grocery", "tier": 3, "reason": {"cf": 0.3986, "content": 0.1819, "popularity": 0.0098, "context": 0.1337}}]}}, {"user_id": 999999, "segment": "new user", "n_events": 0, "top_categories": [], "recs": {"mobile|evening": [{"item_id": 209, "score": 0.866, "category": "sports", "tier": 1, "reason": null}, {"item_id": 185, "score": 0.629, "category": "fashion", "tier": 2, "reason": null}, {"item_id": 258, "score": 0.593, "category": "sports", "tier": 2, "reason": null}, {"item_id": 35, "score": 0.573, "category": "sports", "tier": 1, "reason": null}, {"item_id": 228, "score": 0.554, "category": "sports", "tier": 2, "reason": null}], "mobile|morning": [{"item_id": 209, "score": 0.635, "category": "sports", "tier": 1, "reason": null}, {"item_id": 242, "score": 0.505, "category": "grocery", "tier": 2, "reason": null}, {"item_id": 123, "score": 0.488, "category": "grocery", "tier": 1, "reason": null}, {"item_id": 227, "score": 0.483, "category": "grocery", "tier": 2, "reason": null}, {"item_id": 27, "score": 0.475, "category": "grocery", "tier": 1, "reason": null}], "desktop|day": [{"item_id": 209, "score": 0.691, "category": "sports", "tier": 1, "reason": null}, {"item_id": 37, "score": 0.558, "category": "electronics", "tier": 1, "reason": null}, {"item_id": 65, "score": 0.536, "category": "electronics", "tier": 2, "reason": null}, {"item_id": 265, "score": 0.503, "category": "electronics", "tier": 3, "reason": null}, {"item_id": 208, "score": 0.502, "category": "electronics", "tier": 1, "reason": null}], "desktop|night": [{"item_id": 209, "score": 0.826, "category": "sports", "tier": 1, "reason": null}, {"item_id": 258, "score": 0.554, "category": "sports", "tier": 2, "reason": null}, {"item_id": 35, "score": 0.534, "category": "sports", "tier": 1, "reason": null}, {"item_id": 298, "score": 0.526, "category": "home", "tier": 2, "reason": null}, {"item_id": 228, "score": 0.514, "category": "sports", "tier": 2, "reason": null}]}}], "contexts": ["mobile|evening", "mobile|morning", "desktop|day", "desktop|night"], "weights": {"cf": 0.5, "content": 0.2, "popularity": 0.1, "context": 0.2}};
+
+const METRICS = [
+  { m: "popularity", ndcg: 0.058, recall: 0.103 },
+  { m: "item_cf", ndcg: 0.075, recall: 0.142 },
+  { m: "content", ndcg: 0.078, recall: 0.149 },
+  { m: "hybrid", ndcg: 0.114, recall: 0.186 },
+];
+
+function renderBars(elId, key) {
+  const max = Math.max(...METRICS.map(d => d[key]));
+  const el = document.getElementById(elId);
+  el.innerHTML = METRICS.map(d => `
+    <div class="brow${d.m === "hybrid" ? " win" : ""}">
+      <span class="label">${d.m}</span>
+      <span class="btrack"><span class="bfill" style="width:${(d[key] / max * 100).toFixed(1)}%"></span></span>
+      <span class="val">${d[key].toFixed(3)}</span>
+    </div>`).join("");
+}
+renderBars("ndcg-chart", "ndcg");
+renderBars("recall-chart", "recall");
+
+const CTX_LABELS = {
+  "mobile|evening": "Mobile · Evening",
+  "mobile|morning": "Mobile · Morning",
+  "desktop|day": "Desktop · Day",
+  "desktop|night": "Desktop · Night",
+};
+const SIG = [["cf", "CF"], ["content", "Content"], ["popularity", "Popularity"], ["context", "Context"]];
+const SIG_CLASS = { cf: "cf", content: "ct", popularity: "pop", context: "ctx" };
+
+let curUser = 0, curCtx = DATA.contexts[0];
+
+function chipRow(elId, items, getLabel, isActive, onPick) {
+  const el = document.getElementById(elId);
+  el.innerHTML = "";
+  items.forEach((it, idx) => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.innerHTML = getLabel(it);
+    b.setAttribute("aria-pressed", String(isActive(it, idx)));
+    b.addEventListener("click", () => { onPick(it, idx); render(); });
+    el.appendChild(b);
+  });
+}
+
+function render() {
+  chipRow("user-chips", DATA.users,
+    u => u.n_events
+      ? `${u.segment} <span class="sub">· u${u.user_id} · ${u.n_events} events</span>`
+      : `${u.segment} <span class="sub">· no history</span>`,
+    (u, i) => i === curUser,
+    (u, i) => { curUser = i; });
+
+  chipRow("ctx-chips", DATA.contexts,
+    c => CTX_LABELS[c] || c,
+    c => c === curCtx,
+    c => { curCtx = c; });
+
+  const user = DATA.users[curUser];
+  const recs = user.recs[curCtx] || [];
+  const box = document.getElementById("recs");
+  const cold = user.n_events === 0;
+
+  let html = "";
+  if (cold) {
+    html += `<div class="fallback-banner">No history for this user — serving the cold-start
+      fallback: 0.6 · popularity + 0.4 · context affinity.</div>`;
+  } else if (user.top_categories.length) {
+    html += `<div class="fallback-banner">History skews toward
+      <b>${user.top_categories.join(", ")}</b> — expect those to anchor the list.</div>`;
+  }
+
+  html += recs.map((r, i) => {
+    let bar;
+    if (r.reason) {
+      const total = SIG.reduce((s, [k]) => s + r.reason[k], 0) || 1;
+      bar = `<div class="stack" data-idx="${i}">` + SIG.map(([k]) =>
+        `<span class="seg ${SIG_CLASS[k]}" style="flex:${Math.max(r.reason[k] / total, 0.015)}"></span>`
+      ).join("") + `</div>`;
+    } else {
+      bar = `<div class="cold-note">popularity + context only (no per-signal breakdown for new users)</div>`;
+    }
+    return `<div class="rec">
+      <div class="rec-top">
+        <span class="rank">${i + 1}</span>
+        <span class="item-id">item ${r.item_id}</span>
+        <span class="cat">${r.category} · tier ${r.tier}</span>
+        <span class="score">${r.score.toFixed(3)}</span>
+      </div>${bar}</div>`;
+  }).join("");
+
+  box.innerHTML = html;
+
+  const tip = document.getElementById("tip");
+  box.querySelectorAll(".stack").forEach(st => {
+    const r = recs[+st.dataset.idx];
+    st.addEventListener("mousemove", e => {
+      tip.style.display = "block";
+      tip.innerHTML = `<b>item ${r.item_id}</b><br>` + SIG.map(([k, label]) =>
+        `${label.padEnd(10)} ${r.reason[k].toFixed(3)}`).join("<br>");
+      const w = tip.offsetWidth;
+      tip.style.left = Math.min(e.clientX + 14, window.innerWidth - w - 10) + "px";
+      tip.style.top = (e.clientY + 16) + "px";
+    });
+    st.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+}
+render();
+</script>
+
+</body>
+</html>
