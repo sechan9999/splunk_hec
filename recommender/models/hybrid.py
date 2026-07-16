@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from .base import BaseRecommender, Context, minmax
+from .base import BaseRecommender, Context, rank_norm
 from .content import ContentBasedRecommender
 from .item_cf import ItemItemCFRecommender
 from .popularity import PopularityRecommender
@@ -70,22 +70,30 @@ class HybridContextualRecommender(BaseRecommender):
             return np.zeros(self.n_items)
         return lift[self._item_cat]
 
+    def component_scores(
+        self, user_id: int, context: Context | None = None
+    ) -> dict[str, np.ndarray]:
+        """Rank-normalized component scores (basis for blending and tuning).
+
+        Rank normalization instead of minmax: CF/content scores are
+        heavy-tailed, so minmax squashes most of the signal near 0.
+        """
+        return {
+            "cf": rank_norm(self.cf.score(user_id)),
+            "content": rank_norm(self.content.score(user_id)),
+            "popularity": rank_norm(self.pop.score(user_id)),
+            "context": rank_norm(self._ctx_scores(context)),
+        }
+
     def score(self, user_id: int, context: Context | None = None) -> np.ndarray:
-        w_cf, w_ct, w_pop, w_ctx = self.weights
-        pop_s = minmax(self.pop.score(user_id))
-        ctx_s = minmax(self._ctx_scores(context))
+        c = self.component_scores(user_id, context)
         if user_id not in self.seen:  # cold start
-            return 0.6 * pop_s + 0.4 * ctx_s
-        cf_s = minmax(self.cf.score(user_id))
-        ct_s = minmax(self.content.score(user_id))
-        return w_cf * cf_s + w_ct * ct_s + w_pop * pop_s + w_ctx * ctx_s
+            return 0.6 * c["popularity"] + 0.4 * c["context"]
+        w_cf, w_ct, w_pop, w_ctx = self.weights
+        return (w_cf * c["cf"] + w_ct * c["content"]
+                + w_pop * c["popularity"] + w_ctx * c["context"])
 
     def explain(self, user_id: int, item_id: int, context: Context | None = None) -> dict:
-        w_cf, w_ct, w_pop, w_ctx = self.weights
-        parts = {
-            "cf": w_cf * minmax(self.cf.score(user_id))[item_id],
-            "content": w_ct * minmax(self.content.score(user_id))[item_id],
-            "popularity": w_pop * minmax(self.pop.score(user_id))[item_id],
-            "context": w_ctx * minmax(self._ctx_scores(context))[item_id],
-        }
-        return {k: round(float(v), 4) for k, v in parts.items()}
+        c = self.component_scores(user_id, context)
+        w = dict(zip(("cf", "content", "popularity", "context"), self.weights))
+        return {k: round(float(w[k] * c[k][item_id]), 4) for k in c}

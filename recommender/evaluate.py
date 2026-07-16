@@ -80,21 +80,41 @@ def evaluate(
 def tune_hybrid_weights(
     hybrid, truth_val: dict[int, set[int]], ctx_val: dict[int, Context], k: int = 10
 ) -> tuple[float, float, float, float]:
-    """Grid search all four blend weights on validation NDCG@K."""
-    grid = [0.0, 0.1, 0.2, 0.4, 0.6]
+    """Grid search blend weights on validation NDCG@K.
+
+    Component scores are precomputed once per user, so each grid point is
+    just a weighted sum — allowing a finer simplex grid (step 0.1) at a
+    fraction of the old cost.
+    """
+    comp: dict[int, tuple] = {}
+    for u in truth_val:
+        c = hybrid.component_scores(u, ctx_val.get(u))
+        stacked = np.stack([c["cf"], c["content"], c["popularity"], c["context"]])
+        seen = np.fromiter(hybrid.seen.get(u, ()), dtype=int)
+        comp[u] = (stacked, seen, u in hybrid.seen)
+
+    def ndcg_for(w: tuple[float, ...]) -> float:
+        scores = []
+        for u, pos in truth_val.items():
+            stacked, seen, warm = comp[u]
+            s = (np.asarray(w) @ stacked if warm
+                 else 0.6 * stacked[2] + 0.4 * stacked[3])
+            if seen.size:
+                s = s.copy()
+                s[seen] = -np.inf
+            top = np.argpartition(-s, k)[:k]
+            recs = [int(i) for i in top[np.argsort(-s[top])]]
+            scores.append(_ndcg_at_k(recs, pos, k))
+        return float(np.mean(scores))
+
+    grid = np.round(np.arange(0.0, 1.01, 0.1), 2)
     best, best_w = -1.0, hybrid.weights
-    seen_norm: set[tuple] = set()
-    for w_cf, w_ct, w_pop, w_ctx in itertools.product(grid, grid, grid, grid):
-        total = w_cf + w_ct + w_pop + w_ctx
-        if total == 0:
+    for w_cf, w_ct, w_pop in itertools.product(grid, grid, grid):
+        w_ctx = round(1.0 - w_cf - w_ct - w_pop, 2)
+        if w_ctx < 0:
             continue
-        w = (w_cf / total, w_ct / total, w_pop / total, w_ctx / total)
-        key = tuple(round(x, 6) for x in w)
-        if key in seen_norm:
-            continue
-        seen_norm.add(key)
-        hybrid.set_weights(w)
-        score = evaluate(hybrid, truth_val, ctx_val, k=k)[f"ndcg@{k}"]
+        w = (float(w_cf), float(w_ct), float(w_pop), float(w_ctx))
+        score = ndcg_for(w)
         if score > best:
             best, best_w = score, w
     hybrid.set_weights(best_w)

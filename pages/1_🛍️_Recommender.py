@@ -144,10 +144,10 @@ with right:
 st.divider()
 st.subheader("Offline evaluation (temporal holdout, K=10)")
 mdf = pd.DataFrame({
-    "model": ["popularity", "item_cf", "content", "hybrid_contextual"],
-    "NDCG@10": [0.058, 0.075, 0.078, 0.114],
-    "Recall@10": [0.103, 0.142, 0.149, 0.186],
-    "Coverage@10": [0.30, 0.99, 0.72, 0.74],
+    "model": ["popularity", "item_cf (BM25)", "content", "hybrid_contextual"],
+    "NDCG@10": [0.058, 0.120, 0.078, 0.117],
+    "Recall@10": [0.103, 0.194, 0.149, 0.195],
+    "Coverage@10": [0.30, 0.92, 0.72, 0.77],
 })
 c1, c2 = st.columns([3, 2], gap="large")
 with c1:
@@ -163,6 +163,7 @@ with c1:
     st.plotly_chart(fig2, use_container_width=True)
 with c2:
     st.dataframe(mdf.set_index("model"), use_container_width=True)
-    st.caption("Hybrid ≈ 2× NDCG vs popularity with 2.5× catalog coverage. "
+    st.caption("v2: BM25-weighted CF (+60% CF NDCG) + rank-percentile fusion. "
+               "Hybrid ≈ 2× NDCG vs popularity with 2.6× catalog coverage. "
                "Weights grid-searched on a validation window (days 70–80), "
                "reported on test (days 80–90) — no leakage.")

@@ -22,6 +22,12 @@ def minmax(scores: np.ndarray) -> np.ndarray:
     return (scores - lo) / (hi - lo)
 
 
+def rank_norm(scores: np.ndarray) -> np.ndarray:
+    """Rank-percentile in [0, 1]; robust to heavy-tailed score distributions."""
+    order = np.argsort(np.argsort(scores))
+    return order / max(len(scores) - 1, 1)
+
+
 class BaseRecommender(ABC):
     name: str = "base"
 

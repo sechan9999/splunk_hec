@@ -27,13 +27,14 @@ Dependencies: `numpy`, `pandas`, `fastapi` (no sklearn required).
 events (view/click/cart/purchase + context)
         │
         ├── PopularityRecommender   time-decayed popularity (baseline + cold-start)
-        ├── ItemItemCFRecommender   item-item cosine CF, shrinkage, top-N pruning
+        ├── ItemItemCFRecommender   BM25-weighted item-item cosine CF, shrinkage, top-N pruning
         ├── ContentBasedRecommender item features × interaction-weighted user profile
         └── ContextAffinity         P(category | device, hour, weekend) lift vs global
                 │
         HybridContextualRecommender
         score = w_cf·CF + w_ct·Content + w_pop·Pop + w_ctx·Context
-        (weights tuned by grid search on validation NDCG@10)
+        (rank-percentile fusion; weights tuned by fast simplex grid
+         search on validation NDCG@10 over precomputed components)
                 │
         FastAPI /recommend  → top-K + per-item reason breakdown
 ```
@@ -43,13 +44,24 @@ events (view/click/cart/purchase + context)
 | model | recall@10 | ndcg@10 | coverage@10 |
 |---|---|---|---|
 | popularity | 0.103 | 0.058 | 0.30 |
-| item_cf | 0.142 | 0.075 | 0.99 |
+| item_cf (BM25) | 0.194 | 0.120 | 0.92 |
 | content | 0.149 | 0.078 | 0.72 |
-| **hybrid_contextual** | **0.186** | **0.114** | 0.74 |
+| **hybrid_contextual** | **0.195** | 0.117 | 0.77 |
 
-Hybrid ≈ **2× NDCG vs popularity baseline** with 2.5× catalog coverage.
-Tuned weights on this data: content 0.55, popularity 0.36, context 0.09
-(CF contribution varies by seed/scale — the tuner adapts automatically).
+Hybrid ≈ **2× NDCG vs popularity baseline** with 2.6× catalog coverage.
+Tuned weights on this data: cf 0.2, content 0.6, popularity 0.2
+(varies by seed/scale — the tuner adapts automatically).
+
+### v2 improvements (2026-07)
+
+- **BM25 reweighting** of the interaction matrix before item-item cosine:
+  IDF-boosts rare items, length-normalizes heavy users. CF NDCG@10
+  0.075 → **0.120** (+60%), recall 0.142 → **0.194** (+37%).
+- **Rank-percentile fusion** replaces minmax score blending — CF/content
+  scores are heavy-tailed, so minmax squashed most signal near 0 (the old
+  tuner drove CF weight to 0 because of it).
+- **~6× faster weight tuning**: component scores precomputed once per
+  user; each grid point is a weighted sum, enabling a finer simplex grid.
 
 ## Evaluation protocol
 

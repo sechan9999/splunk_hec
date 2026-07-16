@@ -9,6 +9,7 @@ an offline eval CLI, and a Streamlit demo page.
 | `eda/` | Auditable data-cleaning pipeline + business report (KPIs, monthly revenue, category/region breakdowns) | `pages/2_📊_EDA_Pipeline.py` | `python ds_portfolio/eda/run.py` |
 | `churn/` | Logistic Regression vs Gradient Boosting churn classifier — ROC-AUC, decile lift, feature importance, live scoring | `pages/3_📞_Churn_Classifier.py` | `python ds_portfolio/churn/run.py` |
 | `forecast/` | Walmart-style weekly sales — seasonal-naive baseline vs Ridge (lag-52 + Fourier + holiday/promo, log space), WMAE backtest | `pages/4_📈_Sales_Forecast.py` | `python ds_portfolio/forecast/run.py` |
+| `sentiment/` | TF-IDF bigram + Logistic Regression review classifier — handles negation & contrastive clauses, per-ngram explanations | `pages/5_💬_Sentiment_Analyzer.py` | `python ds_portfolio/sentiment/run.py` |
 
 ## Headline results (defaults, seed=42)
 
@@ -18,6 +19,8 @@ an offline eval CLI, and a Streamlit demo page.
   capture the bulk of churners).
 - **Forecast**: Ridge MAPE **3.4%** vs naive **5.6%**; holiday-weighted WMAE
   **~$74k** vs **~$122k** (13-week holdout, 5 stores).
+- **Sentiment**: accuracy/F1/AUC **0.965** on 1,000 held-out reviews with 3%
+  injected label noise; negated and contrastive phrases classified correctly.
 
 ## Design notes
 
