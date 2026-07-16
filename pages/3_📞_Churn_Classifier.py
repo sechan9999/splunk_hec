@@ -39,14 +39,19 @@ def dark(fig, h=340):
     return fig
 
 
+# bump when ChurnModel's API changes: cache_resource survives hot-reloads
+# on Streamlit Cloud, so stale instances would lack newly added methods
+MODEL_VERSION = 2
+
+
 @st.cache_resource
-def train():
+def train(version: int):
     df = generate()
     return df, ChurnModel().fit(df)
 
 
 st.title("📞 Customer Churn Classifier")
-df, cm = train()
+df, cm = train(MODEL_VERSION)
 st.caption(f"{len(df):,} synthetic telco customers · churn rate "
            f"{df['churn'].mean():.1%} · Logistic Regression vs Gradient Boosting")
 

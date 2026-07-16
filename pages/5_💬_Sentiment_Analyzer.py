@@ -37,14 +37,19 @@ def dark(fig, h=360):
     return fig
 
 
+# bump when SentimentModel's API changes: cache_resource survives
+# hot-reloads on Streamlit Cloud, so stale instances would lack new methods
+MODEL_VERSION = 1
+
+
 @st.cache_resource
-def train():
+def train(version: int):
     df = generate()
     return df, SentimentModel().fit(df)
 
 
 st.title("💬 Text Sentiment Analyzer")
-df, sm = train()
+df, sm = train(MODEL_VERSION)
 m = sm.metrics
 st.caption(f"{len(df):,} synthetic product reviews (negation + contrastive "
            "cases + 3% label noise) · TF-IDF word 1–2 grams + Logistic Regression")

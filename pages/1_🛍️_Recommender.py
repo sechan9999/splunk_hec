@@ -38,8 +38,13 @@ SIG_LABELS = {"cf": "Collaborative", "content": "Content",
               "popularity": "Popularity", "context": "Context"}
 
 
+# bump when model classes change: cache_resource survives hot-reloads on
+# Streamlit Cloud, so stale instances would keep the old behavior/methods
+MODEL_VERSION = 3
+
+
 @st.cache_resource(show_spinner="Training recommender (one-time per session)...")
-def load_model():
+def load_model(version: int):
     users, items, events = generate()
     model = HybridContextualRecommender().fit(events, items)
     meta = items.set_index("item_id")[["category", "price_tier"]].to_dict("index")
@@ -58,7 +63,7 @@ def load_model():
     return model, meta, sample, top_cats
 
 
-model, meta, sample, top_cats = load_model()
+model, meta, sample, top_cats = load_model(MODEL_VERSION)
 
 st.title("🛍️ Hybrid Recommender")
 st.caption("User behavior + product data + context signals, blended into one ranking. "
