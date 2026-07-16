@@ -6,8 +6,9 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
-                             recall_score, roc_auc_score, roc_curve)
+from sklearn.metrics import (brier_score_loss, confusion_matrix, f1_score,
+                             precision_score, recall_score, roc_auc_score,
+                             roc_curve)
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -54,11 +55,62 @@ class ChurnModel:
                 "precision": precision_score(y_te, pred),
                 "recall": recall_score(y_te, pred),
                 "f1": f1_score(y_te, pred),
+                "brier": brier_score_loss(y_te, proba),
                 "confusion": confusion_matrix(y_te, pred),
                 "roc": (fpr, tpr),
                 "proba": proba,
             }
         return self
+
+    def calibration_table(self, name: str = "gboost", n_bins: int = 10) -> pd.DataFrame:
+        """Reliability curve data: mean predicted vs observed churn per bin."""
+        m = self.metrics[name]
+        df = pd.DataFrame({"proba": m["proba"], "churn": self.y_test.values})
+        df["bin"] = pd.cut(df["proba"], bins=np.linspace(0, 1, n_bins + 1),
+                           include_lowest=True)
+        out = (df.groupby("bin", observed=True)
+                 .agg(mean_predicted=("proba", "mean"),
+                      observed_rate=("churn", "mean"),
+                      customers=("churn", "size"))
+                 .reset_index(drop=True))
+        return out.dropna()
+
+    def cost_curve(self, name: str = "gboost", offer_cost: float = 20.0,
+                   churn_loss: float = 400.0, save_rate: float = 0.35,
+                   n_grid: int = 99) -> pd.DataFrame:
+        """Expected cost per customer across thresholds.
+
+        Everyone scored >= t gets a retention offer (cost `offer_cost`).
+        A churner we miss (or fail to save: 1 - save_rate) costs `churn_loss`.
+        """
+        m = self.metrics[name]
+        proba = m["proba"]
+        y = self.y_test.to_numpy()
+        n = len(y)
+        rows = []
+        for t in np.linspace(0.01, 0.99, n_grid):
+            targeted = proba >= t
+            tp = int((targeted & (y == 1)).sum())
+            fp = int((targeted & (y == 0)).sum())
+            fn = int((~targeted & (y == 1)).sum())
+            cost = (offer_cost * (tp + fp)
+                    + churn_loss * (fn + tp * (1 - save_rate)))
+            rows.append({"threshold": t, "cost_per_customer": cost / n,
+                         "targeted_pct": (tp + fp) / n})
+        out = pd.DataFrame(rows)
+        # references: never intervene / offer to everyone
+        out.attrs["do_nothing"] = churn_loss * y.mean()
+        out.attrs["target_all"] = offer_cost + churn_loss * y.mean() * (1 - save_rate)
+        return out
+
+    def optimal_threshold(self, **kwargs) -> dict:
+        curve = self.cost_curve(**kwargs)
+        best = curve.loc[curve["cost_per_customer"].idxmin()]
+        return {"threshold": float(best["threshold"]),
+                "cost_per_customer": float(best["cost_per_customer"]),
+                "targeted_pct": float(best["targeted_pct"]),
+                "do_nothing": float(curve.attrs["do_nothing"]),
+                "target_all": float(curve.attrs["target_all"])}
 
     def lift_table(self, name: str = "gboost", n_bins: int = 10) -> pd.DataFrame:
         """Decile lift: how concentrated churners are in top-scored bins."""

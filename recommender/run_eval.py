@@ -14,8 +14,9 @@ from .evaluate import (
 )
 from .models import (
     ContentBasedRecommender, HybridContextualRecommender,
-    ItemItemCFRecommender, PopularityRecommender,
+    ItemItemCFRecommender, PopularityRecommender, SimBlendRecommender,
 )
+from .models.sim_blend import tune_alpha
 
 
 def main(k: int = 10) -> pd.DataFrame:
@@ -42,6 +43,15 @@ def main(k: int = 10) -> pd.DataFrame:
         metrics = evaluate(m, truth_test, ctx_test, k=k)
         metrics["fit_s"] = round(time.perf_counter() - t0, 2)
         rows.append({"model": m.name, **metrics})
+
+    blend = SimBlendRecommender()
+    t0 = time.perf_counter()
+    blend.fit(train, items)
+    a = tune_alpha(blend, evaluate, truth_val, ctx_val, k=k)
+    print(f"  sim_blend alpha (cf share of similarity): {a}")
+    metrics = evaluate(blend, truth_test, ctx_test, k=k)
+    metrics["fit_s"] = round(time.perf_counter() - t0, 2)
+    rows.append({"model": blend.name, **metrics})
 
     hybrid = HybridContextualRecommender()
     t0 = time.perf_counter()

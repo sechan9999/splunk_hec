@@ -13,7 +13,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from ds_portfolio.forecast import backtest, generate
+from ds_portfolio.forecast import (backtest, generate, generate_hierarchical,
+                                   hier_backtest, pi_coverage)
 
 st.set_page_config(page_title="Sales Forecast", page_icon="📈",
                    layout="wide", initial_sidebar_state="expanded")
@@ -44,6 +45,17 @@ def run_backtest(horizon: int):
     return df, backtest(df, horizon=horizon)
 
 
+@st.cache_data
+def run_pi(horizon: int, level: float):
+    return pi_coverage(generate(), horizon=horizon, level=level)
+
+
+@st.cache_data
+def run_hier(horizon: int):
+    hier = generate_hierarchical()
+    return hier, hier_backtest(hier, horizon=horizon)
+
+
 st.title("📈 Weekly Sales Forecaster")
 st.caption("Walmart-style synthetic weekly store sales · seasonal-naive "
            "baseline vs Ridge (lag-52 + Fourier + holiday/promo, log space) · "
@@ -70,8 +82,18 @@ st.write("")
 g = df[df["store"] == store].sort_values("week")
 fc = res["forecasts"].query("store == @store")
 
+pi_level = st.sidebar.slider("Prediction interval", 0.80, 0.95, 0.90, 0.05)
+pi = run_pi(horizon, pi_level)
+pis = pi["intervals"].query("store == @store")
+
 fig = go.Figure()
 hist = g.iloc[-horizon - 78:]
+fig.add_trace(go.Scatter(x=pis["week"], y=pis["hi"], mode="lines",
+                         line=dict(width=0), showlegend=False, hoverinfo="skip"))
+fig.add_trace(go.Scatter(x=pis["week"], y=pis["lo"], mode="lines",
+                         line=dict(width=0), fill="tonexty",
+                         fillcolor="rgba(116,199,236,0.18)",
+                         name=f"{pi_level:.0%} interval"))
 fig.add_trace(go.Scatter(x=hist["week"], y=hist["weekly_sales"], name="actual",
                          line=dict(color=COLORS["actual"], width=2)))
 for model in ["seasonal_naive", "ridge"]:
@@ -80,9 +102,14 @@ for model in ["seasonal_naive", "ridge"]:
                              line=dict(color=COLORS[model], width=2, dash="dot")))
 for _, r in hist[hist["is_holiday"]].iterrows():
     fig.add_vline(x=r["week"], line_color="#45475a", line_dash="dash")
-fig.update_layout(title=f"Store {store} — actual vs forecast "
+fig.update_layout(title=f"Store {store} — actual vs forecast with "
+                        f"{pi_level:.0%} prediction interval "
                         f"(dashed verticals = holiday weeks)")
 st.plotly_chart(dark(fig, 420), use_container_width=True)
+st.caption(f"Interval from **out-of-sample residuals** (rolling-origin refits, "
+           f"log space → multiplicative bands). Empirical coverage across all "
+           f"stores: **{pi['coverage']:.1%}** vs {pi_level:.0%} target — "
+           f"calibrated, not decorative.")
 
 c1, c2 = st.columns(2)
 with c1:
@@ -105,3 +132,34 @@ st.info("💼 **Business read:** the Ridge model roughly halves holiday-weighted
         "error vs last-year-naive by learning separate spike sizes per holiday "
         "and a promo effect — that is safety-stock and staffing planning "
         "accuracy, exactly where forecast misses cost the most.")
+
+# ── hierarchical: store × dept ───────────────────────────────────────────────
+st.divider()
+st.subheader("🏬 Hierarchical: store × department")
+hier, hres = run_hier(horizon)
+
+hc1, hc2 = st.columns([3, 2])
+with hc1:
+    hg = hier[hier["store"] == store]
+    hist_weeks = sorted(hg["week"].unique())[-horizon - 52:]
+    hg = hg[hg["week"].isin(hist_weeks)]
+    fig = px.area(hg, x="week", y="weekly_sales", color="dept",
+                  color_discrete_sequence=["#74c7ec", "#cba6f7", "#a6e3a1", "#f9e2af"],
+                  title=f"Store {store} by department (each runs its own "
+                        f"promo calendar)")
+    st.plotly_chart(dark(fig, 380), use_container_width=True)
+with hc2:
+    s = hres["summary"].set_index("model")
+    fig = px.bar(hres["metrics"], x="store", y="wmae", color="model",
+                 barmode="group",
+                 color_discrete_map={"bottom_up": "#a6e3a1",
+                                     "direct_total": "#f9e2af"},
+                 title=f"Store-total WMAE: bottom-up "
+                       f"${s.loc['bottom_up','wmae']:,.0f} vs direct "
+                       f"${s.loc['direct_total','wmae']:,.0f}")
+    st.plotly_chart(dark(fig, 380), use_container_width=True)
+
+st.caption("**Bottom-up** (forecast each dept, then sum) beats forecasting the "
+           "store total directly: departments differ in holiday sensitivity, "
+           "trend direction, and promo calendars — the aggregate only sees an "
+           "'any dept on promo' blur, so dept-level structure is lost.")

@@ -22,6 +22,21 @@ an offline eval CLI, and a Streamlit demo page.
 - **Sentiment**: accuracy/F1/AUC **0.965** on 1,000 held-out reviews with 3%
   injected label noise; negated and contrastive phrases classified correctly.
 
+## v2 additions (follow-ups)
+
+- **Churn**: reliability curve + Brier score (well calibrated — probabilities
+  are priceable), and cost-based threshold optimization: with offer $20 /
+  churn loss $400 / save rate 35%, optimal t*≈0.14 targets 58% of the base at
+  **$82/customer vs $102 doing nothing** — the threshold is set by economics,
+  not accuracy at 0.5.
+- **Forecast**: split-conformal prediction intervals from rolling-origin
+  out-of-sample residuals (90% PI → **92.3%** empirical coverage; in-sample
+  residuals only reached 80%), and store×dept hierarchical forecasting where
+  **bottom-up beats direct** (MAPE 5.84% vs 6.14%, WMAE $193k vs $200k)
+  because departments run independent promo calendars the store total blurs.
+- **Recommender**: see `recommender/README.md` §v3 — similarity-level
+  CF+content blending experiment.
+
 ## Design notes
 
 - **Synthetic-but-structured data**: every generator injects known signal

@@ -44,9 +44,10 @@ events (view/click/cart/purchase + context)
 | model | recall@10 | ndcg@10 | coverage@10 |
 |---|---|---|---|
 | popularity | 0.103 | 0.058 | 0.30 |
-| item_cf (BM25) | 0.194 | 0.120 | 0.92 |
+| item_cf (BM25) | 0.194 | **0.120** | 0.92 |
 | content | 0.149 | 0.078 | 0.72 |
-| **hybrid_contextual** | **0.195** | 0.117 | 0.77 |
+| sim_blend (α=0.9) | **0.196** | 0.119 | **0.93** |
+| hybrid_contextual | 0.195 | 0.117 | 0.77 |
 
 Hybrid ≈ **2× NDCG vs popularity baseline** with 2.6× catalog coverage.
 Tuned weights on this data: cf 0.2, content 0.6, popularity 0.2
@@ -62,6 +63,16 @@ Tuned weights on this data: cf 0.2, content 0.6, popularity 0.2
   tuner drove CF weight to 0 because of it).
 - **~6× faster weight tuning**: component scores precomputed once per
   user; each grid point is a weighted sum, enabling a finer simplex grid.
+
+### v3 experiment: similarity-level blending (2026-07)
+
+`SimBlendRecommender` blends at the *similarity matrix* instead of the
+score level: `sim = α·sim_cf + (1−α)·sim_content`, then `score = sim @
+user_vec`. Content neighbors backfill items with thin interaction data
+*before* scoring — a cold-item fix score-level fusion can't express.
+Validation picked α=0.9; result: best recall@10 (0.196) and coverage
+(0.93) of all models, NDCG on par with pure BM25 CF. Score-level hybrid
+keeps the edge only when context/popularity signals matter.
 
 ## Evaluation protocol
 
