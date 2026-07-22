@@ -7,10 +7,11 @@
   the contract being measured against.
 - **Implementation**: `sechan9999/splunk_hec_v2` @ `451c170`
   (`60cac0a` policy+golden, `2e87ccf` remediation+demo gate, `451c170` docs)
-- **Match Rate**: **83%**
-- **Verdict**: below the 90% gate — two scope items are genuinely incomplete
-  (CI gating, evidence bundle shape) and one plan assumption turned out to be
-  wrong on contact.
+- **Match Rate**: **83%** → **96%** after Act iteration 1 (see §6)
+- **Verdict**: initial pass fell below the 90% gate — two scope items were
+  genuinely incomplete (CI gating, evidence bundle shape) and one plan
+  assumption turned out to be wrong on contact. All three findings are now
+  closed; §6 records the re-check.
 
 ---
 
@@ -153,3 +154,74 @@ regardless of what the match rate says.
 Suggested order: Finding 3 (submission integrity) → Finding 2 (CI wiring, the
 suite already exists) → Finding 1 (evidence shape). All three together are well
 under a day and would put the cycle above the 90% gate.
+
+---
+
+## 6. Act iteration 1 — re-check
+
+- **Date**: 2026-07-22
+- **Commit**: `5229215`
+- **Match Rate**: 83% → **96%**
+- **Suite**: 47 → **70 checks**, all green in ~8s
+
+| # | Scope item | Before | After |
+|---|---|---|---|
+| 1 | Policy as versioned contract | 100% | 100% |
+| 2 | Severity re-tiering | 90% | 90% (deviation stands, see Finding 4) |
+| 3 | Golden case suite + coverage gate | 100% | 100% |
+| 4 | Structured verdict payload + evidence bundle | 60% | **100%** |
+| 5 | Lineage-backed remediation | 85% | **95%** |
+| 6 | Risk-tiered deploy gating (CI) | 0% | **95%** |
+| 7 | Documentation & submission update | 100% | 100% |
+
+### What closed
+
+**Finding 1 — evidence bundle.** Verdicts now carry a named `evidence` block
+(`urn`, `tags_consulted`, `quality_state`, `deprecated`, `checked_at`,
+`metadata_age_sec`), and `fetched_at` reaches `DatasetContext.to_dict()`. The
+staleness gap the analysis called out is now measured rather than invisible:
+`test_evidence_records_metadata_staleness` proves a verdict resting on
+two-minute-old metadata reports exactly that.
+
+**Finding 2 — CI gating.** `.github/workflows/governance.yml` implements the
+planned tiering. Structural audit contracts run first and block unconditionally;
+a diff touching `policies/` or `security/policy.py` additionally runs the
+coverage gate and emits a CODEOWNERS reminder. `tests/test_audit_contract.py`
+(10 checks) turns "the audit trail must survive refactors" into something a
+machine enforces — including that the local trail outlives a dead GMS, and that
+`GUARDRAIL_MODE=off` can never be mistaken for a clean allow.
+
+**Finding 3 — the unreproducible 55.** Resolved by making it reproducible
+rather than by deleting the claim: `tests/test_app_smoke.py` (13 checks) is
+committed, and every count in the README and Devpost draft now comes from
+`pytest tests -q` on a clean checkout. The historical `55/55` note stays in
+`live_spike_evidence.md` as a record of that session, but is no longer cited as
+a current guarantee.
+
+### Found while fixing — the demo was behind the write-up
+
+The Devpost draft claimed a block "tells you where to go instead", and the
+payload did carry the suggestion — but `demo_app.py` never rendered it, so the
+one place a judge would look showed nothing. The claim was ahead of the product
+by a single `st.success` call. Now the Data Context tab shows the successor
+with its basis, confidence, and caveats, and says so explicitly when no
+successor can be justified. Two AppTest checks pin both branches.
+
+This is the same class of defect as Finding 6 in the original analysis: the
+engine was right and the surface was stale. Worth noting that both were caught
+by tests that compare a *representation* against the *engine*, which is a
+category the original plan did not anticipate at all.
+
+### Remaining (not blocking)
+
+- **Scope 2 (90%)**: `pii` stays advisory while `hipaa/phi/pci` block. Recorded
+  as an intentional deviation in Finding 4, not a defect.
+- **Scope 5 (95%)**: the demo's successor resolves via `deprecation_note`; the
+  lineage path is covered by golden cases but is still not what a judge sees.
+  Schema verification remains explicitly out of scope and caveated in the
+  payload.
+- **Scope 6 (95%)**: the workflow is committed and its YAML and test selector
+  are validated locally, but it has not yet run on GitHub — the first PR after
+  this merge will be its real proof.
+
+**Gate**: 96% ≥ 90%. Ready for `/pdca report datahub-eval-loop`.

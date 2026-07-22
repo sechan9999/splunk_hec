@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-22T14:26:43.035Z",
+  "lastUpdated": "2026-07-22T14:42:40.829Z",
   "activeFeatures": [
     "multi_llm_platform",
     "enterprise_mcp_connector",
@@ -110,9 +110,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T15:15:51.233Z",
-        "lastUpdated": "2026-07-22T14:26:25.265Z"
+        "lastUpdated": "2026-07-22T14:42:18.895Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\demo_data.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\demo_app.py"
     },
     "ui": {
       "phase": "do",
@@ -136,7 +136,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:49:10.622Z",
-        "lastUpdated": "2026-07-22T14:23:29.711Z"
+        "lastUpdated": "2026-07-22T14:39:56.640Z"
       },
       "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\tools\\datahub_mcp_tool.py"
     },
@@ -149,7 +149,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:49:46.900Z",
-        "lastUpdated": "2026-07-22T14:23:15.347Z"
+        "lastUpdated": "2026-07-22T14:40:05.451Z"
       },
       "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\security\\governance_bridge.py"
     },
@@ -162,9 +162,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:53:10.868Z",
-        "lastUpdated": "2026-07-22T14:26:43.035Z"
+        "lastUpdated": "2026-07-22T14:42:40.829Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\tests\\test_demo_consistency.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\tests\\test_app_smoke.py"
     },
     "datahub-agent": {
       "phase": "act",
@@ -324,26 +324,26 @@
     "datahub-eval-loop": {
       "phase": "check",
       "phaseNumber": 4,
-      "matchRate": 83,
-      "iterationCount": 0,
+      "matchRate": 96,
+      "iterationCount": 1,
       "startedAt": "2026-07-22T00:00:00.000Z",
       "planPath": "docs/01-plan/features/datahub-eval-loop.plan.md",
       "targetRepo": "sechan9999/splunk_hec_v2",
       "localClone": "outputs/MCPagents-splunk-v2",
-      "implCommit": "451c170",
+      "implCommit": "5229215",
       "scopeDone": [
         "1-policy-contract",
         "2-severity-tiering",
         "3-golden-suite+coverage-gate",
+        "4-evidence-bundle",
         "5-lineage-remediation",
+        "6-ci-gating",
         "7-docs+devpost"
       ],
-      "scopeRemaining": [
-        "4-evidence-bundle(partial)",
-        "6-ci-gating"
-      ],
+      "scopeRemaining": [],
       "analysisPath": "docs/03-analysis/datahub-eval-loop.analysis.md",
-      "openFindings": 3
+      "openFindings": 0,
+      "testCount": 70
     }
   },
   "pipeline": {
@@ -354,7 +354,7 @@
   "session": {
     "startedAt": "2026-05-15T11:32:30.729Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-22T14:26:43.035Z"
+    "lastActivity": "2026-07-22T14:42:40.829Z"
   },
   "history": [
     {
@@ -2024,6 +2024,36 @@
     },
     {
       "timestamp": "2026-07-22T14:26:43.035Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T14:39:56.640Z",
+      "feature": "tools",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T14:40:05.451Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T14:40:30.811Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T14:42:18.895Z",
+      "feature": "MCPagents-splunk-v2",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T14:42:40.829Z",
       "feature": "tests",
       "phase": "do",
       "action": "updated"
