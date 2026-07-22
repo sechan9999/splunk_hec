@@ -216,12 +216,16 @@ category the original plan did not anticipate at all.
 
 - **Scope 2 (90%)**: `pii` stays advisory while `hipaa/phi/pci` block. Recorded
   as an intentional deviation in Finding 4, not a defect.
-- **Scope 5 (95%)**: the demo's successor resolves via `deprecation_note`; the
-  lineage path is covered by golden cases but is still not what a judge sees.
-  Schema verification remains explicitly out of scope and caveated in the
-  payload.
-- **Scope 6 (95%)**: the workflow is committed and its YAML and test selector
-  are validated locally, but it has not yet run on GitHub — the first PR after
-  this merge will be its real proof.
+- **Scope 5 (95% → 100%)**: closed by `5a84157`. `session_metrics_v1` puts the
+  lineage path on screen. Schema verification remains explicitly out of scope
+  and caveated in the payload.
+- **Scope 6 (95% → 100%)**: closed. The claim that the workflow "has not yet
+  run on GitHub" was wrong when written — the `5229215` push had already
+  triggered it successfully. PR #1 then verified the `pull_request` trigger and
+  path filters end to end.
+
+> Both residuals were closed the same day. The lesson from the first one is
+> worth keeping: an unverified status claim in an analysis document is the same
+> defect class the cycle set out to fix, just aimed at ourselves.
 
 **Gate**: 96% ≥ 90%. Ready for `/pdca report datahub-eval-loop`.

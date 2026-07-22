@@ -144,11 +144,21 @@ degrade gracefully on *its own absence*, and that is much harder to notice.
 
 ## 8. Follow-ups
 
-- The CI workflow is committed and locally validated (YAML parses, the test
-  selector resolves to 7 checks) but **has not yet run on GitHub** — the first PR
-  after this merge is its real proof.
-- The demo's successor resolves via `deprecation_note`; the lineage path is covered
-  by golden cases but is still not what a judge sees on screen.
+> **Correction (2026-07-22, post-report).** This section originally stated that
+> the CI workflow "has not yet run on GitHub". That was asserted without
+> checking and was wrong: the `5229215` push to master triggered it and it
+> passed in 41s. Both remaining items below were also closed the same day by
+> [PR #1](https://github.com/sechan9999/splunk_hec_v2/pull/1) (`5a84157`).
+
+- ~~The CI workflow has not yet run on GitHub~~ → **Done.** It ran on the
+  `5229215` master push, and PR #1 then exercised the `pull_request` trigger
+  and path filters: `verify` passed in 34s and `policy-change` correctly
+  skipped in 7s because the PR did not touch `policies/`.
+- ~~The demo's successor resolves only via `deprecation_note`~~ → **Done.**
+  `session_metrics_v1` (deprecated, no note, `session_metrics_v2` downstream)
+  demonstrates the lineage path with confidence visibly dropping to medium,
+  plus a consumer dashboard downstream as a decoy. The demo now covers all
+  three evidence paths, including "no successor can be justified". Suite: 72.
 - Drift → PR loop: read *out* of DataHub nightly and open PRs updating the policy
   and its golden cases. The inverse of the write-back that already exists, and the
   half that makes "self-healing" mean something.
