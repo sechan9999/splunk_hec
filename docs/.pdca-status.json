@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-22T15:47:49.206Z",
+  "lastUpdated": "2026-07-22T17:56:48.982Z",
   "activeFeatures": [
     "multi_llm_platform",
     "enterprise_mcp_connector",
@@ -21,9 +21,11 @@
     "inteltrans",
     "IntelTrans",
     "freightdesk",
-    "FreightDesk"
+    "FreightDesk",
+    "demovid",
+    "datahub-drift-guard"
   ],
-  "primaryFeature": null,
+  "primaryFeature": "datahub-drift-guard",
   "features": {
     "MCPagents-splunk": {
       "phase": "do",
@@ -96,9 +98,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-06T21:34:59.163Z",
-        "lastUpdated": "2026-07-16T15:26:29.750Z"
+        "lastUpdated": "2026-07-22T17:33:09.437Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Local\\Temp\\claude\\C--Users-secha-AppData-Roaming-Claude-local-agent-mode-sessions-a11f8f4b-48be-4e38-bd6a-4577148c7465-e485b802-b1e9-4ba3-869f-815651779355-local-c7248499-7b6b-4409-aa8d-e718f46dde77-outputs-MCPagents-s-1iczsq\\7eaa5f88-f143-4df2-9010-9abd3b89ea05\\scratchpad\\asciify.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Local\\Temp\\claude\\C--Users-secha-AppData-Roaming-Claude-local-agent-mode-sessions-a11f8f4b-48be-4e38-bd6a-4577148c7465-e485b802-b1e9-4ba3-869f-815651779355-local-c7248499-7b6b-4409-aa8d-e718f46dde77-outputs-MCPagents-s-1iczsq\\1ba048ea-c938-4cc7-afaf-b47470a94f06\\scratchpad\\record_demo.py"
     },
     "MCPagents-splunk-v2": {
       "phase": "do",
@@ -109,7 +111,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T15:15:51.233Z",
-        "lastUpdated": "2026-07-22T15:47:20.609Z"
+        "lastUpdated": "2026-07-22T16:58:18.124Z"
       },
       "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\demo_data.py"
     },
@@ -148,9 +150,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:49:46.900Z",
-        "lastUpdated": "2026-07-22T14:40:05.451Z"
+        "lastUpdated": "2026-07-22T16:57:55.791Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\security\\governance_bridge.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\security\\remediation.py"
     },
     "tests": {
       "phase": "do",
@@ -161,7 +163,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:53:10.868Z",
-        "lastUpdated": "2026-07-22T15:47:49.206Z"
+        "lastUpdated": "2026-07-22T16:58:40.976Z"
       },
       "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v2\\tests\\test_app_smoke.py"
     },
@@ -327,6 +329,29 @@
       "startedAt": "2026-07-22T00:00:00.000Z",
       "archivedAt": "2026-07-22T16:20:00.000Z",
       "archivedTo": "docs/archive/2026-07/datahub-eval-loop/"
+    },
+    "demovid": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-22T17:50:21.875Z",
+        "lastUpdated": "2026-07-22T17:56:48.982Z"
+      },
+      "lastFile": "C:\\Temp\\demovid\\record.py"
+    },
+    "datahub-drift-guard": {
+      "phase": "plan",
+      "phaseNumber": 1,
+      "matchRate": null,
+      "iterationCount": 0,
+      "startedAt": "2026-07-24T00:00:00.000Z",
+      "planPath": "docs/01-plan/features/datahub-drift-guard.plan.md",
+      "targetRepo": "sechan9999/splunk_hec_v2",
+      "buildsOn": "datahub-eval-loop"
     }
   },
   "pipeline": {
@@ -337,7 +362,7 @@
   "session": {
     "startedAt": "2026-05-15T11:32:30.729Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-22T15:47:49.206Z"
+    "lastActivity": "2026-07-22T17:56:48.982Z"
   },
   "history": [
     {
@@ -2056,6 +2081,66 @@
     {
       "timestamp": "2026-07-22T15:47:49.206Z",
       "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:57:55.791Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:58:08.702Z",
+      "feature": "MCPagents-splunk-v2",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:58:15.775Z",
+      "feature": "MCPagents-splunk-v2",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:58:18.124Z",
+      "feature": "MCPagents-splunk-v2",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:58:29.799Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:58:37.172Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T16:58:40.976Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T17:33:09.437Z",
+      "feature": "scratchpad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T17:50:21.875Z",
+      "feature": "demovid",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-22T17:56:48.982Z",
+      "feature": "demovid",
       "phase": "do",
       "action": "updated"
     }
