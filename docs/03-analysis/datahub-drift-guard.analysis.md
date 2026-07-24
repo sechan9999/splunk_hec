@@ -172,3 +172,41 @@ load-bearing; Scope 5 is scored 95%, not 100%, to reflect that.
   now guarantees it works regardless.
 
 **Gate**: 99% ≥ 90%. Ready for `/pdca report datahub-drift-guard`.
+
+---
+
+## 7. Act iteration 2 — a bug only the live deploy could show
+
+- **Date**: 2026-07-24
+- **Trigger**: v3 deployed to https://splunkhecv3.streamlit.app/ (Finding 4 closed)
+- **Commit**: `0e4d472` (v3) · **Suite**: 99 → **100 checks**
+
+### Finding 5 — the validate button false-rejected on Streamlit Cloud
+
+Clicking "Validate" on the live app returned **Rejected** for a perfectly valid
+fix (`visitors` deprecate → `deprecated_dataset` block). Root cause: the deployed
+Streamlit runtime installs `requirements.txt`, which has **no pytest**, so the
+subprocess exited non-zero — and the iteration-1 fallback only caught the case
+where a subprocess *cannot be spawned*, not one that *runs and fails for an infra
+reason*. So a missing test framework was reported as "your fix is wrong".
+
+This is exactly the risk Finding 2 flagged as "unverified on Streamlit Cloud",
+and it was invisible to AppTest (which runs locally, with pytest present). Only
+clicking the button on the real deploy surfaced it — the case for deploying
+before claiming the feature works.
+
+**Fix**: the subprocess path now distinguishes an infra failure (framework
+missing, or output with no pytest result line) from a real test failure and
+falls back to the in-process check instead of rejecting. The UI calls the
+in-process path directly, since the Cloud runtime will never have pytest; the
+subprocess + coverage-gate path remains the CI check. A test
+(`test_subprocess_infra_failure_falls_back_not_rejects`) mocks the missing-pytest
+exit and pins both halves: a valid fix falls back green, a corrupted one is still
+rejected.
+
+**Verified on the live app**: after redeploy, the same click now returns
+*"Validated — in-process: got block/['deprecated_dataset'], expected
+block/['deprecated_dataset']. Safe to open as a PR."*
+
+Findings 2 and 4 are now both fully closed — the validate button works on the
+real runtime, proven by driving the deployed app, not just asserted.
