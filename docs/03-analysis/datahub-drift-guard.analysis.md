@@ -7,9 +7,9 @@
   contract measured against.
 - **Implementation**: `sechan9999/splunk_hec_v3` @ `be6eba1`
   (`5f26e1a` Milestone B, `be6eba1` Milestone A)
-- **Match Rate**: **94%**
-- **Verdict**: above the 90% gate. Both milestones landed; the residual is two
-  secondary fix flavors that were deferred, and a deliberate Devpost non-update.
+- **Match Rate**: **94% → 99%** after Act iteration 1 (see §6)
+- **Verdict**: above the 90% gate on the first pass; Act iteration 1 then closed
+  Findings 1 and 2. Only the deliberate deviations (Devpost, deploy) remain.
 
 ---
 
@@ -124,3 +124,51 @@ deploy step, not code.
 
 Ready for `/pdca report datahub-drift-guard`, or one short Act iteration to close
 Findings 1–2 first.
+
+---
+
+## 6. Act iteration 1 — re-check
+
+- **Date**: 2026-07-24
+- **Commit**: `b667ab3` (v3)
+- **Match Rate**: 94% → **99%**
+- **Suite**: 96 → **99 checks**; CI green on master (run 30091664639)
+
+| # | Scope item | Before | After |
+|---|---|---|---|
+| 5 | Fix generation | 70% | **95%** |
+| 9 | Docs + submission | 80% | 80% (Devpost deviation stands) |
+
+### What closed
+
+**Finding 1 — successor now wired into the deprecate fix.** `propose_fix` surfaces
+where consumers should migrate for a deprecation, from the deprecation note
+(`user_events_v1 → user_events_v2`, high confidence) or inferred from lineage
+(`session_metrics_v1 → session_metrics_v2`, medium), and offers nothing when
+neither can justify one (`legacy_metrics`). Root cause found while wiring it:
+`_context_for` was dropping `downstream`/`upstream`/`deprecation_note`, so the
+lineage successor path saw an empty graph — fixed. Surfacing is independent of
+whether a *new* rule fired, so an already-deprecated dataset still gets a
+migration target. Three tests pin the note, lineage, and none paths.
+
+**Finding 2 — in-process validation fallback.** `validate_fix` now falls back to
+`validate_fix_inprocess` when a subprocess cannot be spawned (or on
+`allow_subprocess=False`), so the UI validate button never silently no-ops on a
+sandboxed host. The fallback runs the same `decide` the golden suite would and
+**still rejects a corrupted fix** — proven by a test that forces the fallback
+and feeds it a wrong verdict. The subprocess path (with the coverage gate)
+remains the authoritative check where a subprocess is available.
+
+The (c) flavor from Finding 1 (a `policies/` edit when a rule references a
+now-missing dataset/tag) is still deferred — it has no demo scenario and is not
+load-bearing; Scope 5 is scored 95%, not 100%, to reflect that.
+
+### Remaining (not blocking, deliberate)
+
+- **Devpost** (Finding 3): unchanged — v3 is a separate private repo, not the
+  live v2 submission.
+- **Deploy** (Finding 4): v3 still local-only; deploying is what would let the
+  validate button be exercised on the real runtime, but the in-process fallback
+  now guarantees it works regardless.
+
+**Gate**: 99% ≥ 90%. Ready for `/pdca report datahub-drift-guard`.
