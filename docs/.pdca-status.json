@@ -345,9 +345,9 @@
       "lastFile": "C:\\Temp\\demovid\\record.py"
     },
     "datahub-drift-guard": {
-      "phase": "do",
-      "phaseNumber": 3,
-      "matchRate": null,
+      "phase": "check",
+      "phaseNumber": 4,
+      "matchRate": 94,
       "iterationCount": 0,
       "startedAt": "2026-07-24T00:00:00.000Z",
       "planPath": "docs/01-plan/features/datahub-drift-guard.plan.md",
@@ -359,7 +359,9 @@
       "milestoneBDone": true,
       "scopeRemaining": [],
       "milestoneADone": true,
-      "ciVerified": "drift job green on master (run 30090930677)"
+      "ciVerified": "drift job green on master (run 30090930677)",
+      "analysisPath": "docs/03-analysis/datahub-drift-guard.analysis.md",
+      "openFindings": 2
     },
     "MCPagents-splunk-v3": {
       "phase": "do",
