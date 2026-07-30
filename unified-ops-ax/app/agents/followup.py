@@ -1,0 +1,66 @@
+"""Auto Follow-up agent. Drafts a customer-tailored message after delivery,
+but NEVER sends it. Sending is an external action, so it is gated behind an
+explicit human approval (approve_and_send) — the HITL boundary. The agent
+only emits a draft; approval is what produces followup.sent."""
+from __future__ import annotations
+
+from sqlalchemy.orm import Session
+
+from app.ai.gateway import AIGateway, get_gateway
+from app.domain.models import Customer, FollowUp, Order
+from app.events.activity import emit
+
+
+class FollowUpAgent:
+    def __init__(self, session: Session, gateway: AIGateway | None = None) -> None:
+        self.session = session
+        self.gateway = gateway or get_gateway()
+
+    def draft_for_order(self, order_id: str) -> dict:
+        order = self.session.get(Order, order_id)
+        if order is None:
+            raise ValueError(f"order not found: {order_id}")
+        customer = self.session.get(Customer, order.customer_id)
+
+        text = self._draft_message(customer, order)
+        followup = FollowUp(customer_id=customer.id, channel="email", status="draft", draft=text)
+        self.session.add(followup)
+        self.session.flush()
+        emit(self.session, type="followup.drafted", subject_type="customer", subject_id=customer.id,
+             payload={"followup_id": followup.id, "order_id": order.id}, source="agent")
+        self.session.commit()
+
+        return {"followup_id": followup.id, "status": followup.status, "draft": text, "requires_approval": True}
+
+    def approve_and_send(self, followup_id: str, *, approver_employee_id: str | None = None) -> dict:
+        """Human gate. In production this is where the email/SMS adapter fires;
+        the agent can never reach here on its own."""
+        followup = self.session.get(FollowUp, followup_id)
+        if followup is None:
+            raise ValueError(f"followup not found: {followup_id}")
+        if followup.status == "sent":
+            return {"followup_id": followup.id, "status": "sent", "already": True}
+
+        followup.status = "sent"
+        # source=app (human action), not agent — the send was human-approved.
+        emit(self.session, type="followup.sent", subject_type="customer", subject_id=followup.customer_id,
+             actor_employee_id=approver_employee_id,
+             payload={"followup_id": followup.id, "channel": followup.channel}, source="app")
+        self.session.commit()
+        return {"followup_id": followup.id, "status": "sent"}
+
+    def _draft_message(self, customer: Customer, order: Order) -> str:
+        fallback = (
+            f"{customer.name}님, 주문(주문번호 {order.id[:8]})이 잘 전달되었는지 확인차 연락드립니다. "
+            f"이용에 불편한 점이나 문의사항이 있으시면 언제든 회신 부탁드립니다. 감사합니다."
+        )
+        try:
+            result = self.gateway.chat([
+                {"role": "system", "content": "You draft a short, warm post-delivery follow-up message in Korean. "
+                                              "Do not invent facts. Output the message only."},
+                {"role": "user", "content": f"Customer: {customer.name}. Order total: {order.total_amount}."},
+            ])
+            text = result.get("content", "").strip()
+            return text or fallback
+        except Exception:
+            return fallback
