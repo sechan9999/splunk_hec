@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.api import (
     routes_agents,
     routes_gateway,
+    routes_governance,
     routes_hub,
     routes_ops,
     routes_rag,
@@ -43,3 +44,4 @@ app.include_router(routes_ops.router)
 app.include_router(routes_agents.router)
 app.include_router(routes_views.router)
 app.include_router(routes_workspace.router)
+app.include_router(routes_governance.router)

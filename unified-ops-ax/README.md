@@ -20,6 +20,7 @@
 | **경험 레이어 (P4)** | `app/experience/workspace.py` (역할별 위젯 조립+개인화) + `/workspace/dashboard` 씬 클라이언트 |
 | **하드닝: 이벤트 아웃박스+자동트리거** | `app/events/dispatch.py` (에이전트 이벤트 구독) |
 | **하드닝: 인증 미들웨어** | `app/security/auth.py` (Bearer 토큰 → identity, role 서버 도출) |
+| **거버넌스 (P5)** | `app/governance/` — 감사·채택KPI·데이터오너십·대시보드 (manager 전용) + `GOVERNANCE.md` 런북 |
 
 ## 빠른 시작
 
@@ -123,6 +124,4 @@ curl -H "Authorization: Bearer $tok" -X PUT localhost:8000/workspace/me/layout -
 
 ## 다음 단계 (로드맵)
 
-P1·P2·P3 완료 → **P4**(역할별 워크스페이스 UX) → P5(확산·거버넌스). 상세는 설계서 §9.
-
-에이전트 후속: 이벤트 버스 구독으로 자동 트리거(현재 수동 호출), 성과·마케팅 인사이트 배치 에이전트, LLM JSON 구조화 강화(실 provider 연결 시).
+**P1~P5 전 로드맵 구현 완료.** 남은 것은 프로덕션 하드닝(RLS·PII·pgvector·실 이벤트버스·MCP·발송/마케팅 어댑터)과 라이브 연동(provider/크레덴셜 교체). 상세는 설계서 §10 및 `GOVERNANCE.md`.

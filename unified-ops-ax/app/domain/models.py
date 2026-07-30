@@ -202,6 +202,17 @@ class Document(Base, TimestampMixin):
     chunks: Mapped[list[DocumentChunk]] = relationship(back_populates="document", cascade="all, delete-orphan")
 
 
+class DataOwner(Base, TimestampMixin):
+    """Governance registry — who owns each data domain and its classification.
+    Accountability layer over the SSOT (design §7 data ownership)."""
+    __tablename__ = "data_owners"
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uid)
+    domain: Mapped[str] = mapped_column(String(50), unique=True, index=True)  # crm | production | accounting ...
+    owner_employee_id: Mapped[str | None] = mapped_column(ForeignKey("employees.id"), nullable=True)
+    classification: Mapped[str] = mapped_column(String(20), default="internal")  # public | internal | confidential
+    notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+
+
 class UserPreference(Base, TimestampMixin):
     """Per-employee workspace layout — the personalization behind role-based
     custom UX (L5). `layout` is an ordered list of widget ids."""

@@ -44,3 +44,9 @@ def current_identity(
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "missing bearer token")
     return resolve_identity(session, authorization.split(" ", 1)[1])
+
+
+def require_manager(identity: Identity = Depends(current_identity)) -> Identity:
+    if identity.role != "manager":
+        raise HTTPException(403, "manager role required")
+    return identity
