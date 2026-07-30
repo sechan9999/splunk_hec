@@ -1,9 +1,18 @@
-# Unified Ops AX — P1 Hub MVP + Enterprise AI Platform
+# Unified Ops AX — 전사 통합 운영체계
 
-전사 통합 운영체계의 P1 스캐폴드. 데이터 허브(SSOT) + Enterprise AI Platform(RAG · AI Gateway · 커넥터 · Security Trimming · On-prem 확장)을 **오프라인에서 바로 실행/테스트**되도록 구성.
+소규모(~50인) 제조/판매업을 위한 전사 AX 운영체계. 단일 `Activity` 이벤트 스트림(SSOT) 위에 데이터 허브 · Enterprise AI Platform · SaaS 오케스트레이션 · AI 에이전트 · 역할별 경험 레이어 · 거버넌스를 얹은 **모듈러 모놀리스** 백엔드. 키·외부 서비스 없이 **오프라인에서 바로 실행/테스트**.
 
-- 상위 기획: [../docs/01-plan/features/unified-ops-ax.plan.md](../docs/01-plan/features/unified-ops-ax.plan.md)
-- 아키텍처: [../docs/02-design/features/unified-ops-ax.design.md](../docs/02-design/features/unified-ops-ax.design.md)
+- **로드맵 P1~P5 전 단계 구현 완료** · 테스트 **57개** 통과 (오프라인) · FastAPI
+- 기획: [plan](../docs/01-plan/features/unified-ops-ax.plan.md) · 아키텍처: [design](../docs/02-design/features/unified-ops-ax.design.md) · Gap분석: [analysis](../docs/03-analysis/unified-ops-ax.analysis.md) · 보고서: [report](../docs/04-report/unified-ops-ax.report.md) · 거버넌스: [GOVERNANCE.md](GOVERNANCE.md)
+
+### 5-레이어 (설계서 §1)
+```
+L5 경험      역할별 워크스페이스 (app/experience) + /workspace/dashboard
+L4 지능      AI 에이전트 4종 (app/agents) + AI Gateway (app/ai)
+L3 허브      Activity 이벤트 스토어 SSOT + 파생뷰 (app/domain, app/views) + RAG (app/rag)
+L2 통합      SaaS 어댑터·오케스트레이션 (app/connectors, app/orchestration) + 이벤트 아웃박스 (app/events)
+거버넌스     감사·채택KPI·오너십 (app/governance) · 보안 (app/security)
+```
 
 ## 요구사항 → 구현 매핑
 
@@ -113,14 +122,38 @@ curl -H "Authorization: Bearer $tok" -X PUT localhost:8000/workspace/me/layout -
 - **이벤트 아웃박스**(`events/dispatch.py`): 업무 트랜잭션은 Activity만 기록, `POST /ops/dispatch`(워커/cron 대행)가 별도 트랜잭션으로 드레인하며 에이전트 자동 트리거(as.opened→트리아지, delivery.done→팔로업, as.resolved→지식화). `Activity.dispatched`로 멱등. **중첩 커밋 없음.**
 - **RBAC 방어**: 저장된 레이아웃도 조회 시 role로 재필터(권한 밖 위젯 제거).
 
+## 거버넌스 (P5)
+
+불변 Activity 스트림 위의 **조회·통제 계층**(별도 로그 시스템 불필요). manager 전용. 상세 절차는 [GOVERNANCE.md](GOVERNANCE.md).
+
+```bash
+curl -H "Authorization: Bearer $mtok" localhost:8000/governance/dashboard    # 종합
+curl -H "Authorization: Bearer $mtok" "localhost:8000/governance/audit?source=agent&since_days=7"
+curl -H "Authorization: Bearer $mtok" localhost:8000/governance/adoption      # 채택 KPI
+curl -H "Authorization: Bearer $mtok" -X POST localhost:8000/governance/ownership -d '{"domain":"accounting","owner_employee_id":"<id>","classification":"confidential"}'
+```
+
+- **감사 추적**: type·actor·subject·`source`(agent/app/saas)·기간 필터 — 자동/수동 액션 추적.
+- **채택 KPI**: DAU/직원, HITL 승인율, 지식 커버리지, 회계 정합률 (기획서 §2 매핑).
+- **데이터 오너십**: 도메인별 오너·분류, 미지정 도메인 노출.
+- 비-manager 접근 → 403 (`tests/test_governance.py`로 증명).
+
 ## 프로덕션 전환 체크리스트
 
-- `DATABASE_URL` → Postgres, `VECTOR_BACKEND=pgvector` (embedding 컬럼 + `app/rag/vectorstore.py`의 SQL 구현)
+구현 완료(오프라인 검증)된 것과, 라이브 인프라/크레덴셜이 필요한 잔여를 구분한다.
+
+**구현 완료** — 어댑터·스텁·outline까지 존재, provider/크레덴셜만 교체:
+- 인증: Bearer 토큰 → identity, role 서버 도출 (`security/auth.py`) *— 전 라우트 강제 적용은 잔여*
+- 이벤트 아웃박스 + 에이전트 자동트리거 (`events/dispatch.py`, `Activity.dispatched`)
+- docx/pdf 문서 추출, Security Trimming, 회계 정합대조, 일정 양방향 동기화
+
+**라이브/하드닝 잔여**:
+- `DATABASE_URL` → Postgres, `VECTOR_BACKEND=pgvector` (embedding 컬럼 + `app/rag/vectorstore.py` SQL 구현)
 - `DEFAULT_LLM_PROVIDER`/`EMBEDDING_PROVIDER` → anthropic/openai/onprem
-- SharePoint/Teams: 라이브 테넌트 크레덴셜 연결 + 추가 포맷(xlsx/pptx, 스캔 PDF는 OCR) + `/delta` 증분 동기화 (docx/pdf 추출은 구현됨)
-- 회계/일정: 실 SaaS 어댑터 구현(더존/QuickBooks/MS Graph/Google) + 동기화 스케줄러(cron/큐) + refund/취소 흐름
-- 이벤트 버스: in-process → Postgres NOTIFY / Redis (`app/events/activity.py`)
-- 인증/RBAC 게이트를 API 미들웨어로 (현재 role은 요청 파라미터 → 실제로는 토큰에서 도출)
+- SharePoint/Teams: 라이브 테넌트 크레덴셜 + 추가 포맷(xlsx/pptx, 스캔 PDF는 OCR) + `/delta` 증분
+- 회계/일정: 실 SaaS 어댑터(더존/QuickBooks/MS Graph/Google) + 동기화 스케줄러 + refund/취소
+- 이벤트 버스: in-process 아웃박스 → Postgres NOTIFY / Redis + 백그라운드 워커
+- Row-Level Security · PII 암호화 · MCP 서버 · 이메일/SMS·마케팅 광고 어댑터
 
 ## 다음 단계 (로드맵)
 
