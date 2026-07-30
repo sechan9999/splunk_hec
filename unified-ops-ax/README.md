@@ -41,7 +41,11 @@ pytest -q                                         # 전 테스트 오프라인 �
 uvicorn app.main:app --reload                     # http://localhost:8000/docs
 ```
 
-키/외부 서비스 없이 기본값(`fake` LLM·임베딩, `memory` 벡터, SQLite)으로 동작. 실 LLM/Postgres는 `.env`만 교체.
+키/외부 서비스 없이 기본값(`fake` LLM·임베딩, `memory` 벡터, SQLite)으로 동작. 실 LLM/Postgres/Graph/SaaS는 `.env`만 교체 — 절차·검증은 **[LIVE.md](LIVE.md)**.
+
+```bash
+python -m app.preflight    # 라이브 연동 상태 진단 (LLM·벡터·DB·Graph·SaaS)
+```
 
 ## 핵심 개념
 

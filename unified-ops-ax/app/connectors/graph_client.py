@@ -98,3 +98,29 @@ class GraphClient:
         resp = self._http.get(self._url(path), headers=self._headers())
         resp.raise_for_status()
         return resp.content
+
+    def post_json(self, path: str, json: dict) -> dict:
+        resp = self._http.post(self._url(path), headers=self._headers(), json=json)
+        resp.raise_for_status()
+        return resp.json()
+
+    def patch_json(self, path: str, json: dict) -> dict:
+        resp = self._http.patch(self._url(path), headers=self._headers(), json=json)
+        resp.raise_for_status()
+        return resp.json()
+
+    def delete(self, path: str) -> None:
+        resp = self._http.delete(self._url(path), headers=self._headers())
+        resp.raise_for_status()
+
+
+def build_graph_client(http: Optional[httpx.Client] = None) -> GraphClient:
+    """Construct a GraphClient from settings. Raises GraphConfigError if the
+    app registration credentials are missing."""
+    s = get_settings()
+    missing = [k for k in ("graph_tenant_id", "graph_client_id", "graph_client_secret") if not getattr(s, k)]
+    if missing:
+        raise GraphConfigError(f"missing Graph settings: {missing}")
+    auth = GraphAuth(s.graph_tenant_id, s.graph_client_id, s.graph_client_secret,
+                     login_base_url=s.graph_login_url, http=http)
+    return GraphClient(auth, base_url=s.graph_base_url, http=http)

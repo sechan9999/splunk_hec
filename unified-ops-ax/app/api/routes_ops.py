@@ -53,6 +53,14 @@ def calendar_pull(session: Session = Depends(get_session)):
     return CalendarOrchestrator(build_calendar_adapter()).pull(session)
 
 
+@router.get("/preflight")
+def preflight_check():
+    """Validate live wiring (safe: statuses only, no secrets)."""
+    from app.preflight import preflight
+
+    return preflight()
+
+
 @router.post("/dispatch")
 def dispatch_events():
     """Drain the event outbox — triggers subscribed agents (as.opened->triage,

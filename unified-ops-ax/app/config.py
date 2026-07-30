@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     # SaaS orchestration (P2)
     accounting_provider: str = "fake"  # fake | douzone | quickbooks
     calendar_provider: str = "fake"  # fake | msgraph | google
+    calendar_user_id: Optional[str] = None  # mailbox for msgraph calendar
     currency: str = "KRW"
 
     # Microsoft Graph (SharePoint / Teams connector)

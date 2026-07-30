@@ -1,0 +1,71 @@
+# Unified Ops AX — 라이브 연동 가이드
+
+기본값은 오프라인(fake). 아래 크레덴셜을 `.env`에 넣으면 **코드 변경 없이** 라이브로 전환된다. 각 단계 후 프리플라이트로 검증한다.
+
+```bash
+python -m app.preflight            # 또는  GET /ops/preflight
+```
+`status`: `fake`(오프라인) · `configured`(크레덴셜 있음) · `ok`(연결 확인) · `missing`(선택 미설정) · `error`(연결 실패). `ready:false`면 `attention` 서브시스템의 `error`를 먼저 해결.
+
+> 프리플라이트는 상태만 노출(비밀값 없음). LLM 라이브 호출(비용 발생)은 하지 않고 크레덴셜 존재만 확인하며, DB는 무료라 실제 연결까지 확인한다.
+
+---
+
+## 1. LLM / 임베딩
+```
+DEFAULT_LLM_PROVIDER=anthropic        # anthropic | openai | onprem
+ANTHROPIC_API_KEY=sk-...
+ANTHROPIC_MODEL=claude-opus-4-8
+# 또는 온프렘(OpenAI 호환 엔드포인트: Ollama/vLLM)
+# DEFAULT_LLM_PROVIDER=onprem
+# ONPREM_BASE_URL=http://gpu-host:11434
+EMBEDDING_PROVIDER=openai             # 실 임베딩 시
+OPENAI_API_KEY=sk-...
+```
+검증: `POST /gateway/chat {"message":"ping"}` → `provider` 확인.
+
+## 2. Postgres + pgvector (벡터 백엔드)
+```
+DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/unifiedops
+VECTOR_BACKEND=pgvector
+```
+```bash
+pip install psycopg2-binary pgvector    # requirements의 주석 해제
+```
+`PgVectorStore`가 최초 기동 시 `vector` 확장과 `rag_vectors` 테이블(embedding vector 컬럼)을 자체 생성. Security Trimming은 SQL(`acl ?| principals`)로 수행. **라이브 Postgres에서만 검증됨** — 오프라인 테스트는 memory 백엔드 사용.
+검증: `GET /ops/preflight` → `database: ok`, `vector: configured`.
+
+## 3. SharePoint / Teams (Microsoft Graph)
+Azure AD 앱 등록(application 권한, admin-consent): `Sites.Read.All`, `Files.Read.All`, `Group.Read.All` (+ 캘린더는 `Calendars.ReadWrite`).
+```
+GRAPH_TENANT_ID=...
+GRAPH_CLIENT_ID=...
+GRAPH_CLIENT_SECRET=...
+SHAREPOINT_SITE_ID=contoso.sharepoint.com,<siteGuid>,<webGuid>
+TEAMS_GROUP_ID=<m365-group-id>
+```
+검증: `POST /rag/ingest/sharepoint` → 인제스트된 문서·ACL 확인.
+
+## 4. 캘린더 (MS Graph)
+```
+CALENDAR_PROVIDER=msgraph
+CALENDAR_USER_ID=ops@contoso.com       # 대상 메일박스
+```
+검증: `POST /ops/calendar/push` → external_id 부여, `POST /ops/calendar/pull` → 역동기화.
+
+## 5. 회계 SaaS
+```
+ACCOUNTING_PROVIDER=douzone            # douzone | quickbooks (어댑터 실구현 필요)
+```
+현재 더존/QuickBooks 어댑터는 문서화된 스텁 — 각 파일 docstring의 전표 API/OAuth outline대로 `post_transaction`/`list_transactions` 구현 후 사용. 검증: `POST /ops/accounting/sync` → `GET /ops/accounting/reconcile` `integrity_rate`.
+
+---
+
+## 라이브 전환 순서 (권장)
+1. LLM 키 (가장 즉효) → `/gateway/chat`, `/rag/query` 품질 확인
+2. Postgres+pgvector → 데이터 영속성·검색 성능
+3. Graph(SharePoint/캘린더) → 사내 문서·일정
+4. 회계 어댑터 실구현 → 전표 자동화
+5. 운영 하드닝: 실 이벤트버스(NOTIFY/Redis)+워커, RLS, PII 암호화, 발송 어댑터
+
+각 단계는 독립적으로 켤 수 있고(fake와 혼용 가능), 프리플라이트로 상태를 확인하며 점진 전환한다.

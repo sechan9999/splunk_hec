@@ -54,21 +54,64 @@ class InMemoryVectorStore:
 
 
 class PgVectorStore:
-    """Prod backend. Requires `pgvector` extension + `document_chunks.embedding`
-    column. Security trimming is pushed into SQL:
-
-        SELECT id, document_id, text, 1 - (embedding <=> :q) AS score
-        FROM document_chunks
-        WHERE acl = '[]'::jsonb OR acl ?| :principals    -- trim
-        ORDER BY embedding <=> :q
-        LIMIT :k;
-    """
+    """Prod backend on Postgres + pgvector. Manages its own `rag_vectors`
+    table (self-contained, no ORM change). Security trimming is pushed into
+    SQL — public rows (empty acl) or rows whose acl overlaps the caller's
+    principals. Requires: `pip install pgvector psycopg2-binary` and a
+    Postgres DATABASE_URL. Verified against live Postgres only."""
 
     def __init__(self) -> None:
-        raise NotImplementedError(
-            "pgvector backend is a documented stub. Install pgvector, add an "
-            "embedding column, and implement add()/search() with the SQL above."
-        )
+        from sqlalchemy import text
+
+        from app.db import engine
+
+        self._engine = engine
+        self._dim = get_settings().embedding_dim
+        with engine.begin() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            conn.execute(text(
+                f"CREATE TABLE IF NOT EXISTS rag_vectors ("
+                f"id text PRIMARY KEY, document_id text, text text, "
+                f"acl jsonb DEFAULT '[]'::jsonb, meta jsonb DEFAULT '{{}}'::jsonb, "
+                f"embedding vector({self._dim}))"
+            ))
+
+    @staticmethod
+    def _vec(v: np.ndarray) -> str:
+        return "[" + ",".join(f"{x:.6f}" for x in v.tolist()) + "]"
+
+    def add(self, records: list[VectorRecord]) -> None:
+        from sqlalchemy import text
+
+        import json as _json
+        with self._engine.begin() as conn:
+            for r in records:
+                conn.execute(
+                    text("INSERT INTO rag_vectors (id, document_id, text, acl, meta, embedding) "
+                         "VALUES (:id, :doc, :txt, CAST(:acl AS jsonb), CAST(:meta AS jsonb), CAST(:emb AS vector)) "
+                         "ON CONFLICT (id) DO UPDATE SET embedding = EXCLUDED.embedding, acl = EXCLUDED.acl"),
+                    {"id": r.id, "doc": r.document_id, "txt": r.text,
+                     "acl": _json.dumps(r.acl), "meta": _json.dumps(r.meta), "emb": self._vec(r.vector)},
+                )
+
+    def clear(self) -> None:
+        from sqlalchemy import text
+
+        with self._engine.begin() as conn:
+            conn.execute(text("TRUNCATE rag_vectors"))
+
+    def search(self, query: np.ndarray, k: int, principals: set[str] | list[str]) -> list[SearchHit]:
+        from sqlalchemy import text
+
+        with self._engine.connect() as conn:
+            rows = conn.execute(
+                text("SELECT id, document_id, text, meta, 1 - (embedding <=> CAST(:q AS vector)) AS score "
+                     "FROM rag_vectors "
+                     "WHERE jsonb_array_length(acl) = 0 OR acl ?| :principals "  # security trimming
+                     "ORDER BY embedding <=> CAST(:q AS vector) LIMIT :k"),
+                {"q": self._vec(query), "principals": list(principals), "k": k},
+            ).mappings().all()
+        return [SearchHit(r["id"], r["document_id"], r["text"], float(r["score"]), r["meta"] or {}) for r in rows]
 
 
 def get_vector_store():
