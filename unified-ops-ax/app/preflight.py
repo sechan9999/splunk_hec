@@ -23,6 +23,9 @@ def _check_embeddings(s: Settings) -> dict:
     p = s.embedding_provider
     if p == "fake":
         return {"subsystem": "embeddings", "provider": p, "status": "fake"}
+    if p == "onprem":
+        return {"subsystem": "embeddings", "provider": p, "status": "ok",
+                "detail": f"keyless local ({s.onprem_embedding_model})"}
     ok = s.openai_api_key if p == "openai" else True
     return {"subsystem": "embeddings", "provider": p, "status": "configured" if ok else "missing"}
 

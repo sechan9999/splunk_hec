@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # Embeddings
     embedding_provider: str = "fake"  # fake | openai | onprem
     embedding_dim: int = 384
+    onprem_embedding_model: str = "nomic-embed-text"  # keyless local embeddings (Ollama)
 
     # Vector store
     vector_backend: str = "memory"  # memory | pgvector
