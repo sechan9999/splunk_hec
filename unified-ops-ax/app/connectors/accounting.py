@@ -55,20 +55,78 @@ class FakeAccountingAdapter:
         return [t for t in self._ledger.values() if since is None or t.occurred_at >= since]
 
 
-class DouzoneAdapter:  # pragma: no cover - stub
-    """더존 Bizbox / iCUBE. Implement post_transaction via the ERP voucher API
-    (전표 등록) and list_transactions via the ledger query API. Map order_id to
-    the voucher's 적요/참조번호 for reconciliation."""
+class DouzoneAdapter:
+    """더존 Bizbox / iCUBE / WEHAGO ERP API adapter.
+    Real REST implementation; testable offline via httpx.MockTransport.
+
+      sale   -> POST /api/v1/voucher/insert (전표 등록)
+      refund -> POST /api/v1/voucher/insert (차변/대변 반대 전표 등록)
+      list   -> GET  /api/v1/voucher/list   (전표 목록 조회)
+    """
     name = "douzone"
 
-    def __init__(self, **config) -> None:
-        self._config = config
+    def __init__(self, *, api_key: str = "DOUZONE_DUMMY_KEY",
+                 company_code: str = "1000",
+                 base_url: str = "https://api.wehago.com",
+                 http=None) -> None:
+        import httpx
 
-    def post_transaction(self, **kwargs) -> ExternalTxn:
-        raise NotImplementedError("DouzoneAdapter is a documented stub")
+        self._http = http or httpx.Client(timeout=30)
+        self._base = base_url.rstrip("/")
+        self._api_key = api_key
+        self._company_code = company_code
 
-    def list_transactions(self, since=None) -> list[ExternalTxn]:
-        raise NotImplementedError("DouzoneAdapter is a documented stub")
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self._api_key}",
+            "X-Company-Code": self._company_code,
+            "Content-Type": "application/json",
+        }
+
+    def post_transaction(self, *, order_id: str, amount: float, currency: str,
+                         kind: str = "sale", memo: str | None = None) -> ExternalTxn:
+        note = memo or f"order {order_id}"
+        payload = {
+            "company_code": self._company_code,
+            "voucher_type": "refund" if kind == "refund" else "sales",
+            "amount": amount,
+            "currency": currency,
+            "remarks": note,
+            "order_id": order_id,
+        }
+        resp = self._http.post(f"{self._base}/api/v1/voucher/insert", headers=self._headers(), json=payload)
+        resp.raise_for_status()
+        data = resp.json().get("result", {})
+        txn_id = str(data.get("voucher_no") or f"DZ-{order_id}")
+        return ExternalTxn(
+            external_id=txn_id,
+            order_id=order_id,
+            amount=amount,
+            currency=currency,
+            kind=kind,
+            status="posted",
+            occurred_at=_now(),
+        )
+
+    def list_transactions(self, since: datetime | None = None) -> list[ExternalTxn]:
+        params = {}
+        if since:
+            params["since"] = since.isoformat()
+        resp = self._http.get(f"{self._base}/api/v1/voucher/list", headers=self._headers(), params=params)
+        resp.raise_for_status()
+        items = resp.json().get("vouchers", [])
+        out = []
+        for item in items:
+            out.append(ExternalTxn(
+                external_id=str(item.get("voucher_no")),
+                order_id=str(item.get("order_id")) if item.get("order_id") else None,
+                amount=float(item.get("amount", 0.0)),
+                currency=item.get("currency", "KRW"),
+                kind=item.get("voucher_type", "sale"),
+                status="posted",
+                occurred_at=_now(),
+            ))
+        return out
 
 
 class QuickBooksAdapter:
@@ -146,7 +204,11 @@ def build_accounting_adapter() -> AccountingPort:
     if provider == "fake":
         return _FAKE_SINGLETON
     if provider == "douzone":
-        return DouzoneAdapter()
+        return DouzoneAdapter(
+            api_key=getattr(settings, "douzone_api_key", "DOUZONE_DUMMY_KEY"),
+            company_code=getattr(settings, "douzone_company_code", "1000"),
+            base_url=getattr(settings, "douzone_base_url", "https://api.wehago.com"),
+        )
     if provider == "quickbooks":
         if not (settings.qbo_access_token and settings.qbo_realm_id):
             raise ValueError("missing QBO_ACCESS_TOKEN / QBO_REALM_ID")

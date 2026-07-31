@@ -96,23 +96,73 @@ class MSGraphCalendarAdapter:
         self.client.delete(f"/users/{self.user_id}/events/{external_id}")
 
 
-class GoogleCalendarAdapter:  # pragma: no cover - stub
-    """Google Calendar API v3. upsert -> events.insert/patch,
-    list -> events.list(updatedMin=..), delete -> events.delete. OAuth2 service
-    account with domain-wide delegation."""
+class GoogleCalendarAdapter:
+    """Google Calendar API v3 adapter.
+    Real REST implementation; testable offline via httpx.MockTransport.
+
+      upsert -> POST /calendar/v3/calendars/{calendarId}/events or PATCH /calendar/v3/calendars/{calendarId}/events/{eventId}
+      list   -> GET  /calendar/v3/calendars/{calendarId}/events?updatedMin=..
+      delete -> DELETE /calendar/v3/calendars/{calendarId}/events/{eventId}
+    """
     name = "google"
 
-    def __init__(self, **config) -> None:
-        self._config = config
+    def __init__(self, *, access_token: str = "GOOGLE_DUMMY_TOKEN",
+                 calendar_id: str = "primary",
+                 base_url: str = "https://www.googleapis.com",
+                 http=None) -> None:
+        import httpx
+
+        self._http = http or httpx.Client(timeout=30)
+        self._base = base_url.rstrip("/")
+        self._token = access_token
+        self._calendar_id = calendar_id
+
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self._token}",
+            "Content-Type": "application/json",
+        }
+
+    def _to_google(self, event: ExternalEvent) -> dict:
+        body = {"summary": event.title, "start": {"dateTime": event.start}}
+        if event.end:
+            body["end"] = {"dateTime": event.end}
+        return body
+
+    def _from_google(self, item: dict) -> ExternalEvent:
+        return ExternalEvent(
+            external_id=item.get("id"),
+            title=item.get("summary", ""),
+            start=(item.get("start") or {}).get("dateTime", ""),
+            end=(item.get("end") or {}).get("dateTime"),
+            updated_at=item.get("updated"),
+        )
 
     def upsert_event(self, event: ExternalEvent) -> ExternalEvent:
-        raise NotImplementedError("GoogleCalendarAdapter is a documented stub")
+        body = self._to_google(event)
+        if event.external_id:
+            url = f"{self._base}/calendar/v3/calendars/{self._calendar_id}/events/{event.external_id}"
+            resp = self._http.patch(url, headers=self._headers(), json=body)
+        else:
+            url = f"{self._base}/calendar/v3/calendars/{self._calendar_id}/events"
+            resp = self._http.post(url, headers=self._headers(), json=body)
+        resp.raise_for_status()
+        return self._from_google(resp.json())
 
-    def list_events(self, since=None) -> list[ExternalEvent]:
-        raise NotImplementedError("GoogleCalendarAdapter is a documented stub")
+    def list_events(self, since: datetime | None = None) -> list[ExternalEvent]:
+        params = {}
+        if since:
+            params["updatedMin"] = since.isoformat()
+        url = f"{self._base}/calendar/v3/calendars/{self._calendar_id}/events"
+        resp = self._http.get(url, headers=self._headers(), params=params)
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        return [self._from_google(item) for item in items]
 
     def delete_event(self, external_id: str) -> None:
-        raise NotImplementedError
+        url = f"{self._base}/calendar/v3/calendars/{self._calendar_id}/events/{external_id}"
+        resp = self._http.delete(url, headers=self._headers())
+        resp.raise_for_status()
 
 
 _FAKE_SINGLETON = FakeCalendarAdapter()
@@ -130,5 +180,9 @@ def build_calendar_adapter(http=None) -> CalendarPort:
             raise GraphConfigError("missing CALENDAR_USER_ID for msgraph calendar")
         return MSGraphCalendarAdapter(build_graph_client(http), settings.calendar_user_id)
     if provider == "google":
-        return GoogleCalendarAdapter()
+        return GoogleCalendarAdapter(
+            access_token=getattr(settings, "google_calendar_token", "GOOGLE_DUMMY_TOKEN"),
+            calendar_id=getattr(settings, "calendar_user_id", "primary"),
+            http=http,
+        )
     raise ValueError(f"unknown/unconfigured calendar provider: {provider}")

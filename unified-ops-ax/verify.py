@@ -128,6 +128,22 @@ def main() -> int:
         data = json.loads(rpc["result"]["content"][0]["text"])
         check("MCP 서버 (도구 7종 + tools/call)", len(tools) == 7 and data["customer"]["name"] == "대성정밀")
 
+        # 13. Douzone & Google Calendar REST adapters
+        import httpx
+        from app.connectors.accounting import DouzoneAdapter
+        from app.connectors.calendar import GoogleCalendarAdapter, ExternalEvent
+        dz = DouzoneAdapter(http=httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json={"result": {"voucher_no": "DZ-001"}}))))
+        dz_res = dz.post_transaction(order_id="ORD-DZ", amount=100000.0, currency="KRW")
+        gc = GoogleCalendarAdapter(http=httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json={"id": "G-001", "summary": "Meeting"}))))
+        gc_res = gc.upsert_event(ExternalEvent(external_id=None, title="Meeting", start="2026-08-01T10:00:00Z"))
+        check("더존 · Google 캘린더 REST 어댑터", dz_res.external_id == "DZ-001" and gc_res.external_id == "G-001")
+
+        # 14. Marketing Ads Connector
+        from app.connectors.marketing_ads import build_marketing_ads_adapter
+        mkt = build_marketing_ads_adapter()
+        mkt_sum = mkt.get_aggregate_summary()
+        check("마케팅 광고 성능 커넥터 (Aggregate Summary)", mkt_sum["active_campaigns"] >= 2 and mkt_sum["total_spend"] > 0)
+
     # summary
     print("\n" + "=" * 56)
     print("  Unified Ops AX — 오프라인 검증")
