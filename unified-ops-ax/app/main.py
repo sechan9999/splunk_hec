@@ -7,6 +7,7 @@ from app.api import (
     routes_gateway,
     routes_governance,
     routes_hub,
+    routes_mcp,
     routes_ops,
     routes_rag,
     routes_views,
@@ -53,3 +54,4 @@ app.include_router(routes_agents.router)
 app.include_router(routes_views.router)
 app.include_router(routes_workspace.router)
 app.include_router(routes_governance.router)
+app.include_router(routes_mcp.router)

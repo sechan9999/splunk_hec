@@ -30,6 +30,7 @@ L2 통합      SaaS 어댑터·오케스트레이션 (app/connectors, app/orches
 | **하드닝: 이벤트 아웃박스+자동트리거** | `app/events/dispatch.py` (에이전트 이벤트 구독) |
 | **하드닝: 인증 미들웨어** | `app/security/auth.py` (Bearer 토큰 → identity, role 서버 도출) |
 | **거버넌스 (P5)** | `app/governance/` — 감사·채택KPI·데이터오너십·대시보드 (manager 전용) + `GOVERNANCE.md` 런북 |
+| **MCP 서버** | `app/mcp/` — 허브를 MCP 도구 7종으로 노출 (JSON-RPC, stdio + `/mcp/*` 브리지) |
 
 ## 빠른 시작
 
@@ -126,6 +127,18 @@ curl -H "Authorization: Bearer $tok" -X PUT localhost:8000/workspace/me/layout -
 - **인증**(`security/auth.py`): `Authorization: Bearer <token>` → Employee 조회 → role·principals **서버 도출**. role을 요청 파라미터로 받지 않음.
 - **이벤트 아웃박스 + 워커**(`events/dispatch.py`, `worker.py`): 업무 트랜잭션은 Activity만 기록. **이벤트 워커**(`EVENT_WORKER_ENABLED=1`)가 별도 트랜잭션으로 아웃박스를 지속 드레인하며 에이전트 자동 트리거(as.opened→트리아지, delivery.done→팔로업, as.resolved→지식화). `Activity.dispatched`로 멱등, 중첩 커밋 없음. 앱 내 스레드 또는 독립 프로세스(`python -m app.worker`). 수동 1회: `POST /ops/dispatch`. 상태: `GET /ops/worker/status`.
 - **RBAC 방어**: 저장된 레이아웃도 조회 시 role로 재필터(권한 밖 위젯 제거).
+
+## MCP 서버 (외부 AI 연동)
+
+허브 능력을 Model Context Protocol 도구로 노출 — MCP 클라이언트(예: Claude)가 표준으로 조회/안전액션 호출. **읽기 + 안전한 내부 액션(트리아지)만** 노출하고 외부 발송·자금 액션은 제외(HITL 유지).
+
+```bash
+python -m app.mcp.server        # stdio JSON-RPC (정식 MCP 채널)
+curl localhost:8000/mcp/tools   # HTTP 브리지: 도구 목록
+curl -X POST localhost:8000/mcp/rpc -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_pipeline","arguments":{}}}'
+```
+
+도구 7종: `search_knowledge`(RAG·권한트리밍)·`get_customer_360`·`list_open_tickets`·`get_pipeline`·`get_inventory`·`reconcile_accounting`·`triage_ticket`. JSON-RPC(initialize/tools/list/tools/call)를 SDK 없이 직접 구현, 오프라인 검증(`tests/test_mcp_server.py`).
 
 ## 거버넌스 (P5)
 
