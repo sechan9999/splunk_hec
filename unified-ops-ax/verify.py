@@ -10,17 +10,19 @@ import os
 import sys
 import tempfile
 
-# Configure an isolated, offline environment BEFORE importing the app.
+# Configure an isolated environment BEFORE importing the app. DB/vector/PII are
+# forced for isolation; AI/notifier providers respect pre-set env (setdefault),
+# so `DEFAULT_LLM_PROVIDER=onprem ... python verify.py` runs against local Ollama.
 _fd, _db = tempfile.mkstemp(suffix=".db")
 os.close(_fd)
 os.environ.update({
     "DATABASE_URL": f"sqlite+pysqlite:///{_db}",
-    "DEFAULT_LLM_PROVIDER": "fake",
-    "EMBEDDING_PROVIDER": "fake",
     "VECTOR_BACKEND": "memory",
-    "NOTIFIER_PROVIDER": "fake",
     "PII_KEY": "verify-secret",  # exercise PII encryption
 })
+os.environ.setdefault("DEFAULT_LLM_PROVIDER", "fake")
+os.environ.setdefault("EMBEDDING_PROVIDER", "fake")
+os.environ.setdefault("NOTIFIER_PROVIDER", "fake")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -37,11 +39,12 @@ def main() -> int:
     with TestClient(app) as c:
         H = lambda t: {"Authorization": f"Bearer {t}"}
 
-        # 0. preflight — ready, offline LLM/vector, PII engaged
+        # 0. preflight — ready, PII engaged; LLM either fake or a live keyless/configured provider
         pf = c.get("/ops/preflight").json()
         by = {x["subsystem"]: x["status"] for x in pf["checks"]}
-        check("프리플라이트 (ready · LLM fake · PII on)",
-              pf["ready"] and by["llm"] == "fake" and by["vector"] == "ok" and by["pii"] == "configured",
+        check(f"프리플라이트 (ready · LLM={by['llm']} · PII on)",
+              pf["ready"] and by["llm"] in ("fake", "ok", "configured")
+              and by["vector"] == "ok" and by["pii"] == "configured",
               f"mode={pf['mode']}")
 
         # 1. actors
