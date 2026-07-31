@@ -48,6 +48,13 @@ uvicorn app.main:app --reload                     # http://localhost:8000/docs
 python -m app.preflight    # 라이브 연동 상태 진단 (LLM·벡터·DB·Graph·SaaS)
 ```
 
+### 오프라인 검증 (한 번에)
+```bash
+pytest -q          # 유닛 테스트 87개
+python verify.py   # 전 주요 흐름 E2E 스모크 (13개 체크, 키·네트워크 없음)
+```
+`verify.py`는 격리 SQLite + fake provider로 다음을 실제 실행·검증: 프리플라이트, PII at-rest 암호화, 주문→공정→회계 정합, 이벤트 아웃박스→자동 트리아지, 지식화→RAG 검색루프, 배송→팔로업→HITL 발송, Security Trimming, RLS(소유자만·타인 403), 역할별 워크스페이스, 거버넌스(manager 전용), 취소+환불 정합, MCP 서버. 전부 PASS 시 exit 0.
+
 ## 핵심 개념
 
 - **Activity 이벤트 스토어**: 모든 부서 행위가 한 테이블. 성과·회계정합·고객360°·인계자동화가 이 스트림의 파생. `place_order()` 하나가 주문+공정Job+이벤트 3종을 자동 생성.
