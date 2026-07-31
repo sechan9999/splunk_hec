@@ -25,6 +25,11 @@ def accounting_reconcile(session: Session = Depends(get_session)):
     return AccountingOrchestrator(build_accounting_adapter()).reconcile(session)
 
 
+@router.post("/accounting/refund/{order_id}")
+def accounting_refund(order_id: str, amount: float | None = None, session: Session = Depends(get_session)):
+    return AccountingOrchestrator(build_accounting_adapter()).post_refund(session, order_id, amount)
+
+
 @router.post("/schedule")
 def create_schedule_event(body: ScheduleEventIn, session: Session = Depends(get_session)):
     event = ScheduleEvent(**body.model_dump())

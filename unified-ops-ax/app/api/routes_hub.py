@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.db import get_session
 from app.domain.models import Customer, Employee, Product
 from app.domain.schemas import ASTicketIn, CustomerIn, EmployeeIn, OrderIn, ProductIn, ResolveIn
-from app.domain.services import mark_delivered, open_as_ticket, place_order, resolve_as_ticket
+from app.domain.services import cancel_order, mark_delivered, open_as_ticket, place_order, resolve_as_ticket
 from app.views.customer360 import customer_360
 
 router = APIRouter(prefix="/hub", tags=["hub"])
@@ -50,6 +50,12 @@ def create_order(body: OrderIn, session: Session = Depends(get_session)):
 @router.post("/orders/{order_id}/deliver")
 def deliver_order(order_id: str, session: Session = Depends(get_session)):
     order = mark_delivered(session, order_id)
+    return {"id": order.id, "status": order.status}
+
+
+@router.post("/orders/{order_id}/cancel")
+def cancel_order_route(order_id: str, session: Session = Depends(get_session)):
+    order = cancel_order(session, order_id)
     return {"id": order.id, "status": order.status}
 
 

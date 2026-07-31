@@ -56,6 +56,17 @@ def mark_delivered(session: Session, order_id: str) -> Order:
     return order
 
 
+def cancel_order(session: Session, order_id: str) -> Order:
+    order = session.get(Order, order_id)
+    order.status = "cancelled"
+    emit(session, type="order.cancelled", subject_type="order", subject_id=order.id,
+         payload={"customer_id": order.customer_id, "amount": order.total_amount})
+    emit(session, type="order.cancelled", subject_type="customer", subject_id=order.customer_id,
+         payload={"order_id": order.id})
+    session.commit()
+    return order
+
+
 def open_as_ticket(session: Session, *, customer_id: str, summary: str, order_id: str | None = None) -> ASTicket:
     ticket = ASTicket(customer_id=customer_id, order_id=order_id, summary=summary, status="open")
     session.add(ticket)

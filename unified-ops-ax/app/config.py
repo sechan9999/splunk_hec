@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     calendar_user_id: Optional[str] = None  # mailbox for msgraph calendar
     currency: str = "KRW"
 
+    # QuickBooks Online (accounting_provider=quickbooks)
+    qbo_access_token: Optional[str] = None  # OAuth2 bearer (user obtains via QBO auth-code flow)
+    qbo_realm_id: Optional[str] = None
+    qbo_base_url: str = "https://quickbooks.api.intuit.com"
+    qbo_customer_ref: str = "1"  # default QBO CustomerRef; real deploys map order->customer
+
     # Microsoft Graph (SharePoint / Teams connector)
     graph_base_url: str = "https://graph.microsoft.com/v1.0"
     graph_login_url: str = "https://login.microsoftonline.com"

@@ -90,7 +90,8 @@ curl -X POST localhost:8000/ops/calendar/pull         # 캘린더 SaaS -> 로컬
 
 - **회계**: 아웃박스 패턴 — `order.placed`(진실원천)에서 미러 없는 주문만 전표 전송 후 `Transaction` 미러 생성. **멱등**(재실행해도 중복 없음). `reconcile`은 주문 기대금액 vs 미러를 대조해 `integrity_rate`(목표 ≥0.99)·missing·mismatch·orphan 산출. 미러 시 `transaction.posted` 이벤트를 남겨 고객 360°에 반영.
 - **일정**: `ScheduleEvent` ↔ SaaS 양방향. push는 external_id 부여, pull은 external_id로 upsert(중복 방지). 충돌은 updated_at 기준 last-write-wins.
-- 어댑터: 회계 = Fake / 더존 · QuickBooks(스텁), 일정 = Fake / MS Graph · Google(스텁). SaaS별 실연동 outline은 각 파일 docstring.
+- **환불/취소**: `POST /hub/orders/{id}/cancel` → `POST /ops/accounting/refund/{id}`. 취소 주문은 reconcile 기대금액 0(sale−refund=0)으로 정합 유지.
+- 어댑터: 회계 = Fake / **QuickBooks(실구현)** / 더존(문서화 셸), 일정 = Fake / **MS Graph(실구현)** / Google(스텁). QuickBooks·MS Graph는 MockTransport로 검증됨. 실연동은 `.env` 크레덴셜만 — [LIVE.md](LIVE.md).
 
 ## AI 에이전트 레이어 (P3)
 

@@ -54,10 +54,22 @@ CALENDAR_USER_ID=ops@contoso.com       # 대상 메일박스
 검증: `POST /ops/calendar/push` → external_id 부여, `POST /ops/calendar/pull` → 역동기화.
 
 ## 5. 회계 SaaS
+
+### QuickBooks Online — 실구현 완료
 ```
-ACCOUNTING_PROVIDER=douzone            # douzone | quickbooks (어댑터 실구현 필요)
+ACCOUNTING_PROVIDER=quickbooks
+QBO_ACCESS_TOKEN=...          # QBO OAuth2 auth-code 플로우로 사용자가 획득 (refresh는 caller 책임)
+QBO_REALM_ID=...
+QBO_BASE_URL=https://quickbooks.api.intuit.com   # 샌드박스: https://sandbox-quickbooks.api.intuit.com
+QBO_CUSTOMER_REF=1           # 기본 CustomerRef (운영은 order→QBO customer 매핑 필요)
 ```
-현재 더존/QuickBooks 어댑터는 문서화된 스텁 — 각 파일 docstring의 전표 API/OAuth outline대로 `post_transaction`/`list_transactions` 구현 후 사용. 검증: `POST /ops/accounting/sync` → `GET /ops/accounting/reconcile` `integrity_rate`.
+sale→Invoice, refund→CreditMemo, list→`SELECT * FROM Invoice`. 검증: `POST /ops/accounting/sync` → `GET /ops/accounting/reconcile` `integrity_rate`.
+
+### 더존(Douzone) — 문서화 셸
+제품(Bizbox/iCUBE/WEHAGO)·계약별 API가 달라 스펙 확정 후 구현. `DouzoneAdapter` docstring의 전표 등록/원장 조회 outline대로 `post_transaction`/`list_transactions`를 채우면 동일 Port로 동작.
+
+### 환불/취소
+`POST /hub/orders/{id}/cancel` → `POST /ops/accounting/refund/{id}`. 취소 주문은 reconcile에서 기대금액 0 처리(sale-refund=0)되어 정합 유지.
 
 ---
 

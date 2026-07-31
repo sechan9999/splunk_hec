@@ -52,11 +52,22 @@ def _check_graph(s: Settings) -> dict:
 
 
 def _check_saas(s: Settings) -> list[dict]:
-    out = []
-    for name, provider in (("accounting", s.accounting_provider), ("calendar", s.calendar_provider)):
-        status = "fake" if provider == "fake" else "configured"
-        out.append({"subsystem": name, "provider": provider, "status": status})
-    return out
+    if s.accounting_provider == "fake":
+        acc = "fake"
+    elif s.accounting_provider == "quickbooks":
+        acc = "configured" if (s.qbo_access_token and s.qbo_realm_id) else "missing"
+    else:
+        acc = "configured"
+    if s.calendar_provider == "fake":
+        cal = "fake"
+    elif s.calendar_provider == "msgraph":
+        cal = "configured" if s.calendar_user_id else "missing"
+    else:
+        cal = "configured"
+    return [
+        {"subsystem": "accounting", "provider": s.accounting_provider, "status": acc},
+        {"subsystem": "calendar", "provider": s.calendar_provider, "status": cal},
+    ]
 
 
 def preflight() -> dict:

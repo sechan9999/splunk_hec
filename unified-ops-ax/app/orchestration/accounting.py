@@ -32,6 +32,8 @@ class AccountingOrchestrator:
             if order_id in already:
                 continue
             order = session.get(Order, order_id)
+            if order and order.status == "cancelled":
+                continue  # cancelled before sync — no sale voucher
             amount = order.total_amount if order else float(act.payload.get("total", 0.0))
             ext = self.port.post_transaction(
                 order_id=order_id, amount=amount, currency=currency, kind="sale",
@@ -53,6 +55,28 @@ class AccountingOrchestrator:
         session.commit()
         return {"synced": synced}
 
+    def post_refund(self, session: Session, order_id: str, amount: float | None = None) -> dict:
+        """Issue a refund voucher for a (usually cancelled) order and mirror it."""
+        currency = get_settings().currency
+        order = session.get(Order, order_id)
+        refund_amount = amount if amount is not None else (order.total_amount if order else 0.0)
+        ext = self.port.post_transaction(
+            order_id=order_id, amount=refund_amount, currency=currency, kind="refund",
+            memo=f"refund {order_id}",
+        )
+        session.add(Transaction(
+            order_id=order_id, external_id=ext.external_id, kind="refund", amount=ext.amount,
+            currency=ext.currency, status=ext.status, source="accounting_saas", occurred_at=ext.occurred_at,
+        ))
+        session.flush()
+        emit(session, type="transaction.refunded", subject_type="order", subject_id=order_id,
+             payload={"external_id": ext.external_id, "amount": ext.amount}, source="accounting_saas")
+        if order:
+            emit(session, type="transaction.refunded", subject_type="customer", subject_id=order.customer_id,
+                 payload={"order_id": order_id, "amount": ext.amount}, source="accounting_saas")
+        session.commit()
+        return {"order_id": order_id, "refunded": ext.amount, "external_id": ext.external_id}
+
     def reconcile(self, session: Session) -> dict:
         """Compare expected revenue (orders) against mirrored transactions."""
         order_ids = {
@@ -68,10 +92,14 @@ class AccountingOrchestrator:
         matched, missing, mismatched = 0, [], []
         for order_id in order_ids:
             order = session.get(Order, order_id)
-            expected = order.total_amount if order else 0.0
+            # A cancelled order should net to zero (sale offset by refund).
+            expected = 0.0 if (order and order.status == "cancelled") else (order.total_amount if order else 0.0)
             rows = by_order.get(order_id, [])
             if not rows:
-                missing.append(order_id)
+                if expected == 0.0:  # cancelled with no vouchers is consistent
+                    matched += 1
+                else:
+                    missing.append(order_id)
                 continue
             actual = sum(r.amount if r.kind == "sale" else -r.amount for r in rows)
             if abs(actual - expected) < 0.01:
