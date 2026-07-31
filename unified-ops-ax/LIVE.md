@@ -73,6 +73,17 @@ sale→Invoice, refund→CreditMemo, list→`SELECT * FROM Invoice`. 검증: `PO
 
 ---
 
+## 6b. 이벤트 워커 (자동화)
+```
+EVENT_WORKER_ENABLED=true          # 아웃박스 자동 드레인 + 에이전트 자동 트리거
+EVENT_WORKER_INTERVAL=2.0
+```
+앱 기동 시 스레드로 자동 실행되거나, 스케일아웃 시 독립 프로세스로:
+```bash
+python -m app.worker
+```
+검증: `GET /ops/worker/status` → `running:true`, `stats.triggered` 증가. 프로덕션은 폴러를 Postgres LISTEN/NOTIFY 또는 Redis Streams로 승격 가능(동일 `dispatch_pending` 드레인, 아웃박스가 진실원천).
+
 ## 라이브 전환 순서 (권장)
 1. LLM 키 (가장 즉효) → `/gateway/chat`, `/rag/query` 품질 확인
 2. Postgres+pgvector → 데이터 영속성·검색 성능

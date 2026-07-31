@@ -21,7 +21,15 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    worker = None
+    if settings.event_worker_enabled:
+        from app.worker import get_worker
+
+        worker = get_worker()
+        worker.start()
     yield
+    if worker:
+        worker.stop()
 
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)

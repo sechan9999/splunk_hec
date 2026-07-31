@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # PII field encryption at rest (unset = plaintext/dev). Production: AES-GCM + KMS.
     pii_key: Optional[str] = None
 
+    # Event-bus worker (transactional outbox poller). Off by default so dev/tests
+    # don't spawn a thread; enable in deployment.
+    event_worker_enabled: bool = False
+    event_worker_interval: float = 2.0
+
     # SaaS orchestration (P2)
     accounting_provider: str = "fake"  # fake | douzone | quickbooks
     calendar_provider: str = "fake"  # fake | msgraph | google

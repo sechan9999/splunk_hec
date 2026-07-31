@@ -68,9 +68,19 @@ def preflight_check():
 
 @router.post("/dispatch")
 def dispatch_events():
-    """Drain the event outbox — triggers subscribed agents (as.opened->triage,
-    delivery.done->followup, as.resolved->knowledge). A worker/cron drives this."""
+    """Manually drain the event outbox once — triggers subscribed agents
+    (as.opened->triage, delivery.done->followup, as.resolved->knowledge).
+    In deployment the event worker drives this automatically."""
     from app.db import SessionLocal
     from app.events.dispatch import dispatch_pending
 
     return dispatch_pending(SessionLocal)
+
+
+@router.get("/worker/status")
+def worker_status():
+    from app.config import get_settings
+    from app.worker import get_worker
+
+    worker = get_worker()
+    return {"enabled": get_settings().event_worker_enabled, "running": worker.running, "stats": worker.stats}

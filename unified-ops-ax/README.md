@@ -124,7 +124,7 @@ curl -H "Authorization: Bearer $tok" -X PUT localhost:8000/workspace/me/layout -
 ```
 
 - **인증**(`security/auth.py`): `Authorization: Bearer <token>` → Employee 조회 → role·principals **서버 도출**. role을 요청 파라미터로 받지 않음.
-- **이벤트 아웃박스**(`events/dispatch.py`): 업무 트랜잭션은 Activity만 기록, `POST /ops/dispatch`(워커/cron 대행)가 별도 트랜잭션으로 드레인하며 에이전트 자동 트리거(as.opened→트리아지, delivery.done→팔로업, as.resolved→지식화). `Activity.dispatched`로 멱등. **중첩 커밋 없음.**
+- **이벤트 아웃박스 + 워커**(`events/dispatch.py`, `worker.py`): 업무 트랜잭션은 Activity만 기록. **이벤트 워커**(`EVENT_WORKER_ENABLED=1`)가 별도 트랜잭션으로 아웃박스를 지속 드레인하며 에이전트 자동 트리거(as.opened→트리아지, delivery.done→팔로업, as.resolved→지식화). `Activity.dispatched`로 멱등, 중첩 커밋 없음. 앱 내 스레드 또는 독립 프로세스(`python -m app.worker`). 수동 1회: `POST /ops/dispatch`. 상태: `GET /ops/worker/status`.
 - **RBAC 방어**: 저장된 레이아웃도 조회 시 role로 재필터(권한 밖 위젯 제거).
 
 ## 거버넌스 (P5)
