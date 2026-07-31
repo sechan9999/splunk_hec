@@ -1,0 +1,5 @@
+# Keep Vercel a pure static deploy — hide the Streamlit-only files so Vercel
+# does not detect a Python project and try to build a serverless function.
+streamlit_dashboard.py
+requirements.txt
+DEPLOY.md
