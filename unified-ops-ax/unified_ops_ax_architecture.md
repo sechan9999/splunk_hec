@@ -1,6 +1,6 @@
 # Unified Ops AX — 전사 통합 운영체계 아키텍처 & 다이어그램
 
-> **[interactive Dashboard View](file:///C:/Users/secha/.gemini/antigravity-ide/brain/73a3934c-acd4-489f-812e-213c5d9e91f5/unified_ops_ax_dashboard.html)**  
+> **[interactive Dashboard View](./unified_ops_ax_dashboard.html)**  
 > *대시보드 HTML 파일을 클릭하면 브라우저에서 5-Layer 아키텍처 Topology, 이벤트 버스 라이브 시뮬레이션, RLS 보안 권한 조회를 직접 대화형으로 체험할 수 있습니다.*
 
 ---
@@ -160,4 +160,4 @@ flowchart LR
 * **종단간 오프라인 검증**: `python verify.py` → **15/15 Passed**
 
 ---
-*시각화 웹 대시보드: [unified_ops_ax_dashboard.html](file:///C:/Users/secha/.gemini/antigravity-ide/brain/73a3934c-acd4-489f-812e-213c5d9e91f5/unified_ops_ax_dashboard.html)*
+*시각화 웹 대시보드: [unified_ops_ax_dashboard.html](./unified_ops_ax_dashboard.html)*
