@@ -118,3 +118,127 @@ DEFAULT_LLM_PROVIDER=onprem EMBEDDING_PROVIDER=onprem python verify.py   # 로�
 - 설계: `docs/02-design/features/unified-ops-ax.design.md`
 - 분석: `docs/03-analysis/unified-ops-ax.analysis.md`
 - 코드/운영: `unified-ops-ax/` (`README.md`, `LIVE.md`, `GOVERNANCE.md`, `verify.py`)
+
+---
+---
+
+# Unified Ops AX — Final Completion Report (English)
+
+- **Feature**: `unified-ops-ax`
+- **Last updated**: 2026-07-31
+- **Target org**: small manufacturing/retail company (~50 people)
+- **Build strategy**: hybrid (self-built core hub + SaaS integration for accounting/calendar/documents)
+- **Final status**: **Full roadmap P1–P5 + production hardening + fully keyless local stack complete**
+- **Verification**: **97** unit tests · **15** smoke checks (both fake & onprem) · live-verified on local Ollama
+- **Repository**: `github.com/sechan9999/splunk_hec` (master), `0a44706 … 4ab3969`
+- **Scale**: 76 source files · 22 test files
+
+```
+[Plan]✅ [Design]✅ [Do]✅(P1·P2·P3) [Check]✅88%→[Act-1]✅93% [Report]✅
+        + P4 experience layer · P5 governance · 12 hardening items · keyless local stack
+```
+
+---
+
+## 1. Executive Summary
+
+Scattered, per-department workflows and data were unified onto a **single `Activity` event stream (SSOT)**, implemented as a **modular-monolith FastAPI backend** that runs and self-verifies fully offline. Performance management, accounting reconciliation, customer-360, and inter-department handoff all operate as derived views of this one stream. On top of it sit the Enterprise AI Platform (RAG · gateway · document connectors), SaaS orchestration, AI agents, a role-based experience layer, and governance. Finally, a **fully keyless local AI stack** (local Ollama) with zero API keys and zero cost was live-verified.
+
+---
+
+## 2. Delivery Scope (Phases + Hardening)
+
+### Roadmap P1–P5
+| Phase | Deliverable | Status |
+|-------|-------------|:------:|
+| P1 | Data hub (Activity event store) + Enterprise AI Platform (RAG · multi-LLM Gateway · SharePoint/Teams connectors · Security Trimming · docx/pdf extraction) | ✅ |
+| P2 | Accounting/calendar SaaS orchestration (adapters + 99% reconciliation + two-way sync) | ✅ |
+| P3 | 4 AI agents (AS triage · knowledge capture · follow-up HITL · performance insights) + 4 derived views | ✅ |
+| P4 | Role-based workspace assembly + dashboard thin client | ✅ |
+| P5 | Audit · adoption KPIs · data ownership · governance dashboard + rollout runbook | ✅ |
+
+### Production Hardening
+| Item | Implementation |
+|------|----------------|
+| Auth middleware | Bearer token → identity, role derived server-side (`security/auth.py`) |
+| Event outbox + worker | `Activity.dispatched` idempotent, background drain → auto-trigger agents (`events/dispatch.py`, `worker.py`) |
+| RLS | Role-based row access control, `can_view_customer` → 403 (`security/rls.py`) |
+| PII encryption | email/phone encrypted at rest (`enc:v1:`), decrypted only for entitled callers (`security/pii.py`) |
+| Accounting adapters | QuickBooks (real) · Douzone (WEHAGO) · refund/cancel flow |
+| Calendar adapters | MS Graph (real) · Google (real) |
+| Marketing connector | Meta Ads performance/aggregate (`connectors/marketing_ads.py`) |
+| Notifier adapters | SMTP · Twilio, wired to the follow-up HITL approval gate (`connectors/notify.py`) |
+| pgvector | self-managed `rag_vectors` table + SQL Security Trimming |
+| MCP server | hub exposed as 7 MCP tools (JSON-RPC stdio + HTTP bridge) (`app/mcp/`) |
+| Postgres RLS policies | `scripts/postgres_rls_policies.sql` (alongside app-layer RLS) |
+| Preflight | subsystem status diagnostics (no secret values exposed) (`app/preflight.py`) |
+
+### Keyless Fully-Local AI Stack
+- **OnPremProvider** (LLM) + **OnPremEmbedder** (embeddings): direct httpx, OpenAI-compatible → Ollama-native fallback, **no API key required**.
+- 5 lines of `.env` run everything on local Ollama (gemma3:4b + nomic-embed-text): LLM inference + RAG semantic search + all agents.
+
+---
+
+## 3. Key Design Decisions & Verification
+
+| Decision | Rationale | Verification |
+|----------|-----------|--------------|
+| Single Activity stream = SSOT | one table feeds 5 domains; derived views remove silos | 360° timeline E2E |
+| Security Trimming (ACL filter before top-k) | SharePoint-faithful permissions, prevents leakage | sales cannot retrieve accounting doc (even with real embeddings) |
+| Fail-closed permission mapping | on lookup failure, deny rather than expose | proven by test |
+| Rules decide routing, LLM only narrates | hallucination cannot drive assignment + offline fallback | classification unit tests |
+| HITL send gate + notifier adapter | external sends only after human approval | drafted → not sent → approved → delivered |
+| Event outbox (separate transaction) | avoids nested commits, idempotent auto-trigger | worker drain → auto `as.triaged` |
+| MCP exposes reads + safe actions only | external send/financial actions stay behind HITL | tools/list 7, send/refund excluded |
+| PII via stdlib keystream | avoids native crypto DLL failure on long venv path | at-rest `enc:v1:` confirmed |
+| Keyless local providers | run local Llama without paid keys | live gemma3:4b + nomic-embed |
+
+---
+
+## 4. Quality & Verification
+
+- **97 unit tests** pass (rules · adapters · MCP protocol · RLS · PII · edge cases)
+- **15 smoke checks** (`verify.py`) pass — an E2E journey of one customer (order → production → accounting → AS → knowledge → follow-up)
+  - **fake mode** (offline, zero keys): 15/15
+  - **onprem mode** (local Ollama live): 15/15, preflight `LLM=ok keyless`
+- **Live verification**: gemma3:4b (LLM) + nomic-embed-text (embeddings) produce grounded RAG answers with citations; paraphrase semantic search works
+
+Reproduce:
+```bash
+pytest -q                                   # 97 unit tests
+python verify.py                            # 15 smoke checks (offline)
+DEFAULT_LLM_PROVIDER=onprem EMBEDDING_PROVIDER=onprem python verify.py   # local Ollama live
+```
+
+---
+
+## 5. Lessons Learned
+
+1. **Event-store-first design is the physical substance of integration** — adding domains becomes cheap (performance/accounting/360 are derived).
+2. **LLM narrates, rules decide** — offline determinism + production guardrails at once.
+3. **Adapter pattern + Fake implementations** — solves offline testing and lock-in avoidance together (accounting, calendar, notifier, marketing, vector, LLM, embeddings all use the same pattern).
+4. **Environment constraints led to better design** — lxml/native-crypto DLL failures → stdlib docx parsing, stdlib PII keystream.
+5. **Consistency over numbers** — A4 (auto-trigger) solved correctly via the outbox rather than a forced inline hack.
+6. **Keyless localization** — provider abstraction let local Ollama run the whole pipeline with no paid keys.
+
+---
+
+## 6. Remaining Work (honest)
+
+Offline-implementable items are essentially exhausted. What remains needs **real API specs, infrastructure, or credentials**:
+- Live-tenant verification of the Douzone/Google/Meta adapters (code & outline exist; real contract specs needed)
+- Live-Postgres verification of pgvector & the Postgres RLS policies
+- Production upgrades: PII to AES-GCM/KMS, event bus to NOTIFY/Redis, real SMTP/Twilio delivery
+
+Going live requires `.env` credentials + `python -m app.preflight` (details in `LIVE.md`).
+
+---
+
+## 7. Conclusion
+
+The AX execution blueprint **plus a working backend across every layer, verified both offline and via a local live run**, is complete and on GitHub master. With only local Ollama it is **immediately usable at zero key/cost**; real SaaS integration is just a matter of connecting credentials. The PDCA cycle is formally closed.
+
+- Plan: `docs/01-plan/features/unified-ops-ax.plan.md`
+- Design: `docs/02-design/features/unified-ops-ax.design.md`
+- Analysis: `docs/03-analysis/unified-ops-ax.analysis.md`
+- Code/Ops: `unified-ops-ax/` (`README.md`, `LIVE.md`, `GOVERNANCE.md`, `verify.py`)
