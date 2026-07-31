@@ -10,6 +10,7 @@ class CustomerIn(BaseModel):
     email: str | None = None
     phone: str | None = None
     segment: str | None = None
+    owner_employee_id: str | None = None
 
 
 class ProductIn(BaseModel):

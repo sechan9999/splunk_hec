@@ -7,6 +7,9 @@ from app.db import get_session
 from app.domain.models import Customer, Employee, Product
 from app.domain.schemas import ASTicketIn, CustomerIn, EmployeeIn, OrderIn, ProductIn, ResolveIn
 from app.domain.services import cancel_order, mark_delivered, open_as_ticket, place_order, resolve_as_ticket
+from app.security.auth import Identity, current_identity
+from app.security.pii import get_cipher
+from app.security.rls import can_view_customer, scope_customers
 from app.views.customer360 import customer_360
 
 router = APIRouter(prefix="/hub", tags=["hub"])
@@ -14,14 +17,40 @@ router = APIRouter(prefix="/hub", tags=["hub"])
 
 @router.post("/customers")
 def create_customer(body: CustomerIn, session: Session = Depends(get_session)):
-    customer = Customer(**body.model_dump())
+    cipher = get_cipher()
+    data = body.model_dump()
+    data["email"] = cipher.encrypt(data.get("email"))  # PII encrypted at rest
+    data["phone"] = cipher.encrypt(data.get("phone"))
+    customer = Customer(**data)
     session.add(customer)
     session.commit()
     return {"id": customer.id, "name": customer.name}
 
 
+@router.get("/me/customers")
+def my_customers(identity: Identity = Depends(current_identity), session: Session = Depends(get_session)):
+    rows = scope_customers(session, identity)  # RLS-scoped
+    return [{"id": c.id, "name": c.name, "segment": c.segment} for c in rows]
+
+
+@router.get("/customers/{customer_id}")
+def get_customer(customer_id: str, identity: Identity = Depends(current_identity),
+                 session: Session = Depends(get_session)):
+    if not can_view_customer(session, identity, customer_id):
+        raise HTTPException(403, "not entitled to this customer")
+    c = session.get(Customer, customer_id)
+    if c is None:
+        raise HTTPException(404, "customer not found")
+    cipher = get_cipher()
+    return {"id": c.id, "name": c.name, "segment": c.segment,
+            "email": cipher.decrypt(c.email), "phone": cipher.decrypt(c.phone)}  # PII decrypted for entitled caller
+
+
 @router.get("/customers/{customer_id}/360")
-def get_customer_360(customer_id: str, session: Session = Depends(get_session)):
+def get_customer_360(customer_id: str, identity: Identity = Depends(current_identity),
+                     session: Session = Depends(get_session)):
+    if not can_view_customer(session, identity, customer_id):
+        raise HTTPException(403, "not entitled to this customer")
     view = customer_360(session, customer_id)
     if view is None:
         raise HTTPException(404, "customer not found")

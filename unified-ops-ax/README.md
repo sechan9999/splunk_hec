@@ -148,9 +148,11 @@ curl -H "Authorization: Bearer $mtok" -X POST localhost:8000/governance/ownershi
 구현 완료(오프라인 검증)된 것과, 라이브 인프라/크레덴셜이 필요한 잔여를 구분한다.
 
 **구현 완료** — 어댑터·스텁·outline까지 존재, provider/크레덴셜만 교체:
-- 인증: Bearer 토큰 → identity, role 서버 도출 (`security/auth.py`) *— 전 라우트 강제 적용은 잔여*
+- 인증: Bearer 토큰 → identity, role 서버 도출 (`security/auth.py`)
+- **RLS**(`security/rls.py`): 역할별 행 접근제어 — sales는 자기 고객, AS는 배정/미배정 티켓, manager/accounting은 전체. 고객 상세/360°는 `can_view_customer` 미충족 시 403.
+- **PII 암호화**(`security/pii.py`): Customer email/phone를 at-rest 암호화(`enc:v1:`), 권한자 조회 시에만 복호화. 키 없으면 no-op(dev). *stdlib 키스트림 — 프로덕션은 AES-GCM/KMS 권장.*
 - 이벤트 아웃박스 + 에이전트 자동트리거 (`events/dispatch.py`, `Activity.dispatched`)
-- docx/pdf 문서 추출, Security Trimming, 회계 정합대조, 일정 양방향 동기화
+- docx/pdf 추출, Security Trimming, 회계 정합대조·환불, 일정 양방향, QuickBooks/MS Graph 어댑터
 
 **라이브/하드닝 잔여**:
 - `DATABASE_URL` → Postgres, `VECTOR_BACKEND=pgvector` (embedding 컬럼 + `app/rag/vectorstore.py` SQL 구현)
@@ -158,7 +160,7 @@ curl -H "Authorization: Bearer $mtok" -X POST localhost:8000/governance/ownershi
 - SharePoint/Teams: 라이브 테넌트 크레덴셜 + 추가 포맷(xlsx/pptx, 스캔 PDF는 OCR) + `/delta` 증분
 - 회계/일정: 실 SaaS 어댑터(더존/QuickBooks/MS Graph/Google) + 동기화 스케줄러 + refund/취소
 - 이벤트 버스: in-process 아웃박스 → Postgres NOTIFY / Redis + 백그라운드 워커
-- Row-Level Security · PII 암호화 · MCP 서버 · 이메일/SMS·마케팅 광고 어댑터
+- 프로덕션 강화: Postgres RLS 정책(앱 계층 RLS 구현됨) · AES-GCM/KMS(PII 앱 암호화 구현됨) · MCP 서버 · 이메일/SMS·마케팅 광고 어댑터 · 더존/Google 어댑터
 
 ## 다음 단계 (로드맵)
 

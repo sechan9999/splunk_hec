@@ -30,9 +30,12 @@ class Customer(Base, TimestampMixin):
     __tablename__ = "customers"
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uid)
     name: Mapped[str] = mapped_column(String(200))
-    email: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # email/phone are PII — stored encrypted at rest when PII_KEY is set.
+    email: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(200), nullable=True)
     segment: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Account owner (sales rep) — drives row-level security.
+    owner_employee_id: Mapped[str | None] = mapped_column(ForeignKey("employees.id"), nullable=True, index=True)
 
     orders: Mapped[list[Order]] = relationship(back_populates="customer")
     leads: Mapped[list[Lead]] = relationship(back_populates="customer")

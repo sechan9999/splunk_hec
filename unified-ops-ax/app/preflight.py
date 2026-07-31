@@ -70,9 +70,14 @@ def _check_saas(s: Settings) -> list[dict]:
     ]
 
 
+def _check_pii(s: Settings) -> dict:
+    return {"subsystem": "pii", "status": "configured" if s.pii_key else "plaintext"}
+
+
 def preflight() -> dict:
     s = get_settings()
-    checks = [_check_llm(s), _check_embeddings(s), _check_vector(s), _check_database(s), _check_graph(s)]
+    checks = [_check_llm(s), _check_embeddings(s), _check_vector(s), _check_database(s),
+              _check_graph(s), _check_pii(s)]
     checks += _check_saas(s)
     live = any(c.get("status") == "configured" for c in checks)
     # Only hard errors (e.g. DB unreachable) need attention. `missing` means an

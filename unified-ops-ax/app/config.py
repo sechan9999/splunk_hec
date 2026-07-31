@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # Vector store
     vector_backend: str = "memory"  # memory | pgvector
 
+    # PII field encryption at rest (unset = plaintext/dev). Production: AES-GCM + KMS.
+    pii_key: Optional[str] = None
+
     # SaaS orchestration (P2)
     accounting_provider: str = "fake"  # fake | douzone | quickbooks
     calendar_provider: str = "fake"  # fake | msgraph | google
