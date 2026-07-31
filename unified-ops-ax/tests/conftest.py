@@ -17,9 +17,12 @@ from app.rag.vectorstore import get_vector_store  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def clean_state():
+    from app.connectors.notify import _FAKE_SINGLETON  # noqa: E402
+
     Base.metadata.drop_all(bind=engine)
     init_db()
     get_vector_store().clear()
+    _FAKE_SINGLETON.clear()
     yield
 
 

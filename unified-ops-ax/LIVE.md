@@ -84,6 +84,22 @@ python -m app.worker
 ```
 검증: `GET /ops/worker/status` → `running:true`, `stats.triggered` 증가. 프로덕션은 폴러를 Postgres LISTEN/NOTIFY 또는 Redis Streams로 승격 가능(동일 `dispatch_pending` 드레인, 아웃박스가 진실원천).
 
+## 6c. 발송 어댑터 (팔로업 HITL 발송)
+```
+NOTIFIER_PROVIDER=smtp                # fake | console | smtp | twilio
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=ops@company.com
+SMTP_PASSWORD=...
+SMTP_FROM=ops@company.com
+# 또는 SMS
+# NOTIFIER_PROVIDER=twilio
+# TWILIO_ACCOUNT_SID=AC...
+# TWILIO_AUTH_TOKEN=...
+# TWILIO_FROM_NUMBER=+1...
+```
+승인(`POST /agents/followup/{id}/approve`) 시에만 고객 연락처(PII 복호화)로 발송. 에이전트는 절대 자동 발송하지 않음. 검증: 승인 응답 `delivered:true`, `message_id`.
+
 ## 라이브 전환 순서 (권장)
 1. LLM 키 (가장 즉효) → `/gateway/chat`, `/rag/query` 품질 확인
 2. Postgres+pgvector → 데이터 영속성·검색 성능

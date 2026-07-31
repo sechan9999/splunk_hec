@@ -36,6 +36,17 @@ class Settings(BaseSettings):
     event_worker_enabled: bool = False
     event_worker_interval: float = 2.0
 
+    # Notifier (follow-up delivery). fake = in-memory outbox (dev/test).
+    notifier_provider: str = "fake"  # fake | console | smtp | twilio
+    smtp_host: Optional[str] = None
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from: Optional[str] = None
+    twilio_account_sid: Optional[str] = None
+    twilio_auth_token: Optional[str] = None
+    twilio_from_number: Optional[str] = None
+
     # SaaS orchestration (P2)
     accounting_provider: str = "fake"  # fake | douzone | quickbooks
     calendar_provider: str = "fake"  # fake | msgraph | google

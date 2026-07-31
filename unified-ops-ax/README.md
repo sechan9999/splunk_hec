@@ -110,7 +110,7 @@ curl -X POST localhost:8000/agents/followup/{followup_id}/approve   # 사람 승
 | **지식화 캡처** | `as.resolved` | 구조화 KnowledgeItem(draft) + RAG 인덱싱 → 검색 루프 폐쇄 | 자동(리뷰 큐) |
 | **자동 팔로업** | `delivery.done` | 고객 맞춤 메시지 **초안** | **사람 승인 후 발송(HITL)** |
 
-핵심: 에이전트는 원본 데이터를 침묵 수정하지 않고, 팔로업은 **절대 스스로 발송하지 않음** — `approve_and_send`(사람 게이트)에서만 `followup.sent` 발생. 실제 이메일/SMS 어댑터는 이 승인 지점에 연결.
+핵심: 에이전트는 원본 데이터를 침묵 수정하지 않고, 팔로업은 **절대 스스로 발송하지 않음** — `approve_and_send`(사람 게이트)에서만 `followup.sent` 발생. **발송 어댑터**(`connectors/notify.py`, Fake/Console/SMTP/Twilio)가 이 승인 지점에 연결되어, 승인 후 고객 연락처(PII 복호화)로 실제 발송(`NOTIFIER_PROVIDER`). 연락처 없으면 `delivered:false`로 기록.
 
 ## 경험 레이어 (P4) + 하드닝
 

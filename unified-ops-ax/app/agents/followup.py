@@ -7,14 +7,17 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.ai.gateway import AIGateway, get_gateway
+from app.connectors.notify import build_notifier
 from app.domain.models import Customer, FollowUp, Order
 from app.events.activity import emit
+from app.security.pii import get_cipher
 
 
 class FollowUpAgent:
-    def __init__(self, session: Session, gateway: AIGateway | None = None) -> None:
+    def __init__(self, session: Session, gateway: AIGateway | None = None, notifier=None) -> None:
         self.session = session
         self.gateway = gateway or get_gateway()
+        self._notifier = notifier or build_notifier()
 
     def draft_for_order(self, order_id: str) -> dict:
         order = self.session.get(Order, order_id)
@@ -41,13 +44,28 @@ class FollowUpAgent:
         if followup.status == "sent":
             return {"followup_id": followup.id, "status": "sent", "already": True}
 
+        # Resolve the recipient (PII decrypted) and deliver via the notifier.
+        customer = self.session.get(Customer, followup.customer_id)
+        cipher = get_cipher()
+        to = None
+        if customer:
+            to = cipher.decrypt(customer.phone) if followup.channel == "sms" else cipher.decrypt(customer.email)
+
+        result = None
+        if to:
+            result = self._notifier.send(to=to, body=followup.draft or "",
+                                         subject="문의 팔로업", channel=followup.channel)
+
         followup.status = "sent"
         # source=app (human action), not agent — the send was human-approved.
         emit(self.session, type="followup.sent", subject_type="customer", subject_id=followup.customer_id,
              actor_employee_id=approver_employee_id,
-             payload={"followup_id": followup.id, "channel": followup.channel}, source="app")
+             payload={"followup_id": followup.id, "channel": followup.channel,
+                      "delivered": bool(to), "message_id": result.message_id if result else None},
+             source="app")
         self.session.commit()
-        return {"followup_id": followup.id, "status": "sent"}
+        return {"followup_id": followup.id, "status": "sent", "delivered": bool(to),
+                "message_id": result.message_id if result else None}
 
     def _draft_message(self, customer: Customer, order: Order) -> str:
         fallback = (
