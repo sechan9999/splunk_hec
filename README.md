@@ -10,7 +10,7 @@
 **👉 [https://splunkhec.streamlit.app/](https://splunkhec.streamlit.app/)**
 
 The Streamlit Cloud deployment runs in **Demo Mode** by default — all 4 tabs (Agent Run, Live Splunk Events, Auto-Remediation, DLP/SOAR) work with simulated data. Toggle Demo Mode off in the sidebar to connect to real Splunk/MCPAgents backends.
-
+Unified Ops AX: https://splunkax.streamlit.app/
 ---
 
 ## 🎯 Core Innovation: Closed-Loop Agentic Ops
