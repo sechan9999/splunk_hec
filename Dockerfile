@@ -1,12 +1,16 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
+# Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application files
 COPY . .
 
-EXPOSE 8000
+# Expose Cloud Run default port 8080
+EXPOSE 8080
 
-CMD ["python", "main.py", "--server"]
+# Run Streamlit on port 8080
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8080", "--server.address=0.0.0.0", "--server.headless=true"]
