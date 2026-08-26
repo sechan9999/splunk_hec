@@ -3,7 +3,8 @@
 ## 📋 Devpost Submission Form Answers
 
 ### 1. Project Basics & Eligibility
-- **Built during submission period?**: Yes (Started: August 2026)
+- **Built during submission period?**: Yes (Newly created during submission period)
+- **Project Start Date (MM-DD-YY)**: **`08-24-26`** (August 24, 2026)
 - **Google Model Used**: **Gemini 3.5 Flash**
 - **Google Agent Framework Used**: **Google Agent Development Kit (ADK)** & **Google GenAI SDK**
 - **Google Cloud Services Used**:
