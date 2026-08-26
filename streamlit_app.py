@@ -90,7 +90,7 @@ nav_choice = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Hackathon Context")
-st.sidebar.info("**All Things Agentic Hackathon**\n\nGoogle Cloud + Gemini 2.0 Flash\nCategory: Fortified Enterprise Fleet")
+st.sidebar.info("**All Things Agentic Hackathon**\n\nGoogle Cloud + Gemini 3.5 Flash\nCategory: Fortified Enterprise Fleet")
 
 # Header Section
 st.title("🚀 Unified Ops AX: Fleet Control Center")

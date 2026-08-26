@@ -4,7 +4,7 @@
 
 ### 1. Project Basics & Eligibility
 - **Built during submission period?**: Yes (Started: August 2026)
-- **Google Model Used**: Gemini 2.0 Flash / Gemini Flash
+- **Google Model Used**: **Gemini 3.5 Flash**
 - **Google Agent Framework Used**: **Google Agent Development Kit (ADK)** & **Google GenAI SDK**
 - **Google Cloud Services Used**:
   - **Vertex AI / AI Platform** (Model Execution)
