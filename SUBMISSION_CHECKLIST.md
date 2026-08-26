@@ -21,6 +21,9 @@
 ## 🔗 Links & Repositories
 
 - **GitHub Repository Link**: [https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax) (mapped to `sechan9999/splunk_hec`)
+- **Architecture Diagram**: Provided in [`architecture_diagram.md`](file:///c:/Users/secha/.gemini/antigravity-ide/scratch/unified-ops-ax/architecture_diagram.md).
+- **Spin-Up Instructions**: Added to [`README.md`](file:///c:/Users/secha/.gemini/antigravity-ide/scratch/unified-ops-ax/README.md) and [`HACKATHON_SUBMISSION.md`](file:///c:/Users/secha/.gemini/antigravity-ide/scratch/unified-ops-ax/HACKATHON_SUBMISSION.md).
+- **Reproducible Testing Instructions**: Section added to [`README.md`](file:///c:/Users/secha/.gemini/antigravity-ide/scratch/unified-ops-ax/README.md) (`pytest tests/ -v`, `python hackathon_showcase.py`, `python verify.py`). (mapped to `sechan9999/splunk_hec`)
 - **Private Access Granted To**:
   - `testing@devpost.com`
   - `cloudhackathons@google.com`

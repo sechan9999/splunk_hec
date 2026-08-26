@@ -97,6 +97,41 @@ python security/soar_bridge.py    # DLP→SOAR pipeline test
 python auto_remediation.py        # Auto-remediation test
 ```
 
+---
+
+## 🧪 Reproducible Testing & Verification
+
+We provide **100% reproducible automated testing** with zero external network dependencies required:
+
+### 1. Full Automated Test Suite (`pytest`)
+Runs all 25 unit and integration tests across async workers, GCP Pub/Sub, Kafka streaming, K8s pod scaling, local DLP PII guardrails, and agent orchestrators:
+```bash
+pytest tests/ -v
+# Expected: 25 passed in < 5.0 seconds
+```
+
+### 2. Hackathon Benchmark & Interactive Showcase
+Executes a 5-stage benchmark processing 2,000 log events, triggering sub-10ms auto-remediation, executing K8s HPA pod scaling (2 -> 8 replicas), and masking PII with SHA-256 signatures:
+```bash
+python hackathon_showcase.py
+```
+
+### 3. End-to-End System Verification Suite
+Exercises all 14 subsystem checks (actors, RAG security trimming, RLS, audit logging, MCP server):
+```bash
+python verify.py
+# Exit 0 = all green
+```
+
+### 4. Interactive Fleet Control Dashboard
+Launches the live Streamlit + PyDeck 3D control center locally:
+```bash
+streamlit run streamlit_app.py --server.port 8501
+# View at http://localhost:8501 or https://unified-ops.streamlit.app/
+```
+
+---
+
 #### 6. Standalone Server (without Docker)
 ```bash
 python main.py --server
