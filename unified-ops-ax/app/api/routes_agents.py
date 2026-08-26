@@ -47,3 +47,10 @@ def approve_followup(followup_id: str, session: Session = Depends(get_session)):
         return FollowUpAgent(session).approve_and_send(followup_id)
     except ValueError as exc:
         raise HTTPException(404, str(exc))
+
+
+@router.get("/followup/pending")
+def list_pending_followups(session: Session = Depends(get_session)):
+    """List all drafted customer follow-up messages waiting for human sign-off."""
+    return {"pending": FollowUpAgent.list_pending(session)}
+

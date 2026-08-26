@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "travel-concierge"
+version = "0.1.0"
+description = "Multi-Agent ADK Travel Concierge System with Pre-Trip Translation Tool"
+requires-python = ">=3.11"
+dependencies = [
+    "google-adk>=2.7.1",
+    "pydantic>=2.13.4",
+    "pytest>=8.0.0",
+]
+
+[tool.setuptools]
+packages = ["agents", "sub_agents", "sub_agents.pre_trip", "tools"]
+py-modules = ["concierge", "agent"]

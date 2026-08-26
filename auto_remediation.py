@@ -135,9 +135,9 @@ class RouterRemediator:
         self._remediation_count += 1
 
         logger.warning(
-            f"🔧 Auto-remediation: {anomaly_type.value} "
+            f"[REMEDIATION] Auto-remediation: {anomaly_type.value} "
             f"(value={anomaly_value:.2f}, threshold={policy.trigger_threshold}) "
-            f"→ {len(applied_actions)} actions applied"
+            f"-> {len(applied_actions)} actions applied"
         )
 
         return {

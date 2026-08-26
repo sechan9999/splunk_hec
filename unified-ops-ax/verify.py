@@ -10,6 +10,9 @@ import os
 import sys
 import tempfile
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 # Configure an isolated, offline environment BEFORE importing the app.
 _fd, _db = tempfile.mkstemp(suffix=".db")
 os.close(_fd)

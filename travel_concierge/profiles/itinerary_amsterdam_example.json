@@ -1,0 +1,44 @@
+{
+  "customer": {
+    "name": "Cymbal Traveler",
+    "nationality": "American",
+    "origin": "United States"
+  },
+  "trip": {
+    "destination": "Amsterdam, Netherlands",
+    "city": "Amsterdam",
+    "country": "Netherlands",
+    "start_date": "2026-09-15",
+    "duration_days": 4,
+    "itinerary": [
+      {
+        "day": 1,
+        "title": "Arrival & Canal District Walk",
+        "details": "Flight arrival at Schiphol Airport, transfer to Grand Canal Boutique Hotel",
+        "requires_payment": true,
+        "cost_usd": 1250.0
+      },
+      {
+        "day": 2,
+        "title": "Rijksmuseum & Evening Canal Cruise",
+        "details": "Guided tour of Rijksmuseum and evening dinner cruise along central canals",
+        "requires_payment": true,
+        "cost_usd": 180.0
+      },
+      {
+        "day": 3,
+        "title": "Van Gogh Museum & Jordaan Food Tour",
+        "details": "Van Gogh Museum entry and afternoon walking tour through Jordaan district",
+        "requires_payment": true,
+        "cost_usd": 110.0
+      },
+      {
+        "day": 4,
+        "title": "Vondelpark & Departure",
+        "details": "Morning walk in Vondelpark, souvenir shopping, airport departure",
+        "requires_payment": false,
+        "cost_usd": 0.0
+      }
+    ]
+  }
+}

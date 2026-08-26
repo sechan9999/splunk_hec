@@ -41,13 +41,16 @@ class InMemoryVectorStore:
         self._records.clear()
 
     def search(self, query: np.ndarray, k: int, principals: set[str] | list[str]) -> list[SearchHit]:
-        q = query / (np.linalg.norm(query) or 1.0)
+        q_norm = float(np.linalg.norm(query))
+        q = (query / q_norm) if q_norm > 1e-12 else query
         principals = set(principals)
         hits: list[SearchHit] = []
         for rec in self._records:
             if not can_access(rec.acl, principals):  # security trimming
                 continue
-            score = float(np.dot(rec.vector, q))
+            r_norm = float(np.linalg.norm(rec.vector))
+            r_vec = (rec.vector / r_norm) if r_norm > 1e-12 else rec.vector
+            score = float(np.dot(r_vec, q))
             hits.append(SearchHit(rec.id, rec.document_id, rec.text, score, rec.meta))
         hits.sort(key=lambda h: h.score, reverse=True)
         return hits[:k]

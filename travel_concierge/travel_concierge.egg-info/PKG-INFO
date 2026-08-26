@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: travel-concierge
+Version: 0.1.0
+Summary: Multi-Agent ADK Travel Concierge System with Pre-Trip Translation Tool
+Requires-Python: >=3.11
+Requires-Dist: google-adk>=2.7.1
+Requires-Dist: pydantic>=2.13.4
+Requires-Dist: pytest>=8.0.0

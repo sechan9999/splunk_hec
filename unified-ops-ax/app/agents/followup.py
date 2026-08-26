@@ -56,16 +56,30 @@ class FollowUpAgent:
             result = self._notifier.send(to=to, body=followup.draft or "",
                                          subject="문의 팔로업", channel=followup.channel)
 
-        followup.status = "sent"
-        # source=app (human action), not agent — the send was human-approved.
+        delivered = bool(result)
+        message_id = result.message_id if result else None
         emit(self.session, type="followup.sent", subject_type="customer", subject_id=followup.customer_id,
-             actor_employee_id=approver_employee_id,
-             payload={"followup_id": followup.id, "channel": followup.channel,
-                      "delivered": bool(to), "message_id": result.message_id if result else None},
-             source="app")
+             payload={"followup_id": followup.id, "delivered": delivered, "message_id": message_id},
+             source="app", actor_employee_id=approver_employee_id)
         self.session.commit()
-        return {"followup_id": followup.id, "status": "sent", "delivered": bool(to),
-                "message_id": result.message_id if result else None}
+        return {"followup_id": followup.id, "status": "sent", "delivered": delivered, "message_id": message_id}
+
+
+    @staticmethod
+    def list_pending(session: Session) -> list[dict]:
+        """List all queued follow-up drafts awaiting human sign-off."""
+        drafts = session.query(FollowUp).filter(FollowUp.status == "draft").all()
+        return [
+            {
+                "followup_id": f.id,
+                "customer_id": f.customer_id,
+                "channel": f.channel,
+                "status": f.status,
+                "draft": f.draft,
+                "created_at": f.created_at.isoformat() if f.created_at else None,
+            }
+            for f in drafts
+        ]
 
     def _draft_message(self, customer: Customer, order: Order) -> str:
         fallback = (

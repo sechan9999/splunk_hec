@@ -1,7 +1,13 @@
 from collections.abc import Iterator
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
+
+try:
+    from sqlalchemy.orm import DeclarativeBase
+except ImportError:
+    from sqlalchemy.orm import declarative_base
+    DeclarativeBase = declarative_base()  # type: ignore[assignment,misc]
 
 from app.config import get_settings
 
@@ -12,8 +18,11 @@ engine = create_engine(settings.database_url, connect_args=_connect_args, future
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False, future=True)
 
 
-class Base(DeclarativeBase):
-    pass
+if isinstance(DeclarativeBase, type) and hasattr(DeclarativeBase, "metadata"):
+    class Base(DeclarativeBase):
+        pass
+else:
+    Base = DeclarativeBase  # type: ignore[misc,assignment]
 
 
 def init_db() -> None:

@@ -13,18 +13,20 @@ router = APIRouter(prefix="/workspace", tags=["experience"])
 
 _DASHBOARD_HTML = """<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Unified Ops AX — Workspace</title>
+<title>Unified Ops AX — Workspace & HITL Queue</title>
 <style>
  :root{color-scheme:light dark}
  body{font-family:system-ui,sans-serif;margin:0;background:#0f1115;color:#e6e6e6}
  header{padding:14px 20px;background:#171a21;border-bottom:1px solid #262b36;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
  input{background:#0f1115;border:1px solid #333;color:#e6e6e6;padding:8px;border-radius:6px;flex:1;min-width:200px}
  button{background:#3b82f6;border:0;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer}
- main{padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+ button.approve{background:#10b981;font-weight:600;margin-top:6px}
+ main{padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
  .card{background:#171a21;border:1px solid #262b36;border-radius:10px;overflow:hidden}
- .card h3{margin:0;padding:12px 14px;background:#1e222b;font-size:14px;border-bottom:1px solid #262b36}
+ .card h3{margin:0;padding:12px 14px;background:#1e222b;font-size:14px;border-bottom:1px solid #262b36;display:flex;justify-content:space-between}
  pre{margin:0;padding:12px 14px;font-size:12px;overflow:auto;max-height:280px;white-space:pre-wrap}
  .who{opacity:.7;font-size:13px}
+ .item-row{padding:10px 14px;border-bottom:1px solid #262b36;font-size:13px}
 </style></head><body>
 <header>
  <strong>Unified Ops AX</strong>
@@ -43,11 +45,37 @@ async function load(){
  document.getElementById('who').textContent=d.employee.name+' · '+d.employee.role;
  for(const w of d.widgets){
   const c=document.createElement('div');c.className='card';
-  c.innerHTML='<h3>'+w.label+'</h3><pre>'+JSON.stringify(w.data,null,2)+'</pre>';
+  c.innerHTML='<h3><span>'+w.label+'</span></h3><pre>'+JSON.stringify(w.data,null,2)+'</pre>';
   g.appendChild(c);
  }
+ await loadPendingApprovals();
+}
+async function loadPendingApprovals(){
+ const res=await fetch('/agents/followup/pending');
+ if(!res.ok)return;
+ const data=await res.json();
+ const g=document.getElementById('grid');
+ const c=document.createElement('div');c.className='card';
+ let html='<h3><span>🛡️ HITL Approval Queue (Drafts)</span><span style="color:#10b981">'+data.pending.length+' Pending</span></h3>';
+ if(data.pending.length===0){
+  html+='<pre>No pending customer follow-up drafts.</pre>';
+ } else {
+  for(const item of data.pending){
+   html+='<div class="item-row"><strong>Customer:</strong> '+item.customer_id+' ('+item.channel+')<br/>'
+        +'<em>"'+(item.draft||'').substring(0,80)+'..."</em><br/>'
+        +'<button class="approve" onclick="approveDraft(\''+item.followup_id+'\')">Approve & Send (HTTP Gate)</button></div>';
+  }
+ }
+ c.innerHTML=html;
+ g.prepend(c);
+}
+async function approveDraft(id){
+ const r=await fetch('/agents/followup/'+id+'/approve',{method:'POST'});
+ if(r.ok){alert('Follow-up message approved and sent!'); loadPendingApprovals();}
+ else alert('Approval failed: '+r.status);
 }
 </script></body></html>"""
+
 
 
 class LayoutIn(BaseModel):
