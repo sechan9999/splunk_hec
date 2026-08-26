@@ -19,12 +19,12 @@
 
 ## 🔗 Links & Repositories
 
-- **GitHub Repository Link**: [https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax)
+- **GitHub Repository Link**: [https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax) (mapped to `sechan9999/splunk_hec`)
 - **Private Access Granted To**:
   - `testing@devpost.com`
   - `cloudhackathons@google.com`
-- **Hosted Project URL**: `http://127.0.0.1:8085` (Local ADK Web UI) / GCP Cloud Run Endpoint
-- **Testing Credentials**: Not required (Public ADK Dev UI endpoint).
+- **Hosted Project URL**: [https://unified-ops.streamlit.app/](https://unified-ops.streamlit.app/)
+- **Testing Credentials**: Not required (Public Streamlit Web App).
 
 ---
 
