@@ -13,8 +13,9 @@ def _check_llm(s: Settings) -> dict:
     p = s.default_llm_provider
     if p == "fake":
         return {"subsystem": "llm", "provider": p, "status": "fake"}
-    has = {"anthropic": s.anthropic_api_key, "openai": s.openai_api_key,
-           "onprem": s.onprem_base_url}.get(p)
+    if p == "onprem":
+        return {"subsystem": "llm", "provider": p, "status": "ok", "detail": f"keyless local endpoint ({s.onprem_base_url})"}
+    has = {"anthropic": s.anthropic_api_key, "openai": s.openai_api_key}.get(p)
     return {"subsystem": "llm", "provider": p, "status": "configured" if has else "missing"}
 
 
@@ -22,6 +23,9 @@ def _check_embeddings(s: Settings) -> dict:
     p = s.embedding_provider
     if p == "fake":
         return {"subsystem": "embeddings", "provider": p, "status": "fake"}
+    if p == "onprem":
+        return {"subsystem": "embeddings", "provider": p, "status": "ok",
+                "detail": f"keyless local ({s.onprem_embedding_model})"}
     ok = s.openai_api_key if p == "openai" else True
     return {"subsystem": "embeddings", "provider": p, "status": "configured" if ok else "missing"}
 

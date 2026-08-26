@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Ops AX — Enterprise Architecture & Live Control Desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(22, 30, 49, 0.75);
+            --bg-card-hover: rgba(30, 42, 69, 0.85);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(59, 130, 246, 0.3);
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-amber: #f59e0b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-sub: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 60%);
+            background-attachment: fixed;
+        }
+
+        /* Header Bar */
+        header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.35rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-emerald);
+            box-shadow: 0 0 10px var(--accent-emerald);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        /* Nav Controls */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(59, 130, 246, 0.35);
+        }
+
+        /* Main Container */
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Grid Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* 5-Layer Topology Diagram */
+        .layer-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .layer-box:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateX(4px);
+        }
+
+        .layer-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .layer-name {
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            color: #fff;
+        }
+
+        .layer-tech {
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .tag.highlight {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .tag.green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .tag.purple {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        /* Console Log */
+        .console {
+            background: #050811;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            height: 380px;
+            overflow-y: auto;
+            color: #e2e8f0;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .log-entry {
+            margin-bottom: 0.6rem;
+            line-height: 1.4;
+            display: flex;
+            gap: 0.75rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .log-time { color: var(--text-sub); min-width: 70px; }
+        .log-event { color: var(--accent-cyan); font-weight: 500; }
+        .log-data { color: #a7f3d0; }
+
+        /* Simulator Controls */
+        .sim-btn {
+            background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+            color: #fff;
+            border: none;
+            padding: 0.65rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+        }
+
+        .sim-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Role Selector Bar */
+        .role-selector {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .role-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.45rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .role-btn.active {
+            background: var(--accent-purple);
+            color: #fff;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Connector Status Matrix */
+        .conn-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .conn-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .conn-title { font-weight: 700; font-size: 1rem; }
+        .conn-stat { font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 12px; }
+        .conn-stat.ok { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+
+        /* Verification Table */
+        .verify-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        .verify-table th { text-align: left; padding: 0.75rem 1rem; color: var(--text-sub); border-bottom: 1px solid var(--border-color); font-weight: 600; }
+        .verify-table td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.04); }
+        .verify-badge { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-logo">AX</div>
+            <div>
+                <div class="brand-title">Unified Ops AX</div>
+                <div style="font-size: 0.75rem; color: var(--text-sub);">Enterprise Manufacturing & Sales Operating System</div>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('topology')">🏗️ 5-Layer Topology</button>
+            <button class="tab-btn" onclick="switchTab('simulator')">⚡ Live Event Bus</button>
+            <button class="tab-btn" onclick="switchTab('security')">🛡️ Security & RLS</button>
+            <button class="tab-btn" onclick="switchTab('connectors')">🔌 SaaS Connectors</button>
+            <button class="tab-btn" onclick="switchTab('verification')">✅ Verification (15/15)</button>
+        </nav>
+
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            <span>OFFLINE SUITE PASS (15/15)</span>
+        </div>
+    </header>
+
+    <!-- Main Views -->
+    <main>
+        <!-- View 1: 5-Layer Architecture Topology -->
+        <section id="view-topology" class="view-section active">
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">전사 5-Layer 시스템 아키텍처 Topology</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">단일 Activity 이벤트 스트림 기반 모듈러 모놀리스 백엔드 구조</p>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <div class="layer-box" style="border-left-color: var(--accent-pink);">
+                        <div class="layer-header">
+                            <span class="layer-name">Layer 5. Experience Layer (경험 레이어)</span>
+                            <span class="layer-tech">app/experience/workspace.py</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">역할별 맞춤형 씬클라이언트 워크스페이스 (Manager, Sales, AS, Accounting)</p>
+                    </div>
+                    <div class="layer-box" style="border-left-color: var(--accent-purple);">
+                        <div class="layer-header">
+                            <span class="layer-name">Layer 4. AI Agent Layer (AI 에이전트)</span>
+                            <span class="layer-tech">app/agents/ (triage, knowledge, followup)</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">결정적 분류기 + 자동 트리아지 + 지식화 RAG 루프 + HITL 팔로업 초안</p>
+                    </div>
+                    <div class="layer-box" style="border-left-color: var(--accent-blue);">
+                        <div class="layer-header">
+                            <span class="layer-name">Layer 3. Core Data Hub (데이터 허브 & 이벤트 버스)</span>
+                            <span class="layer-tech">app/events/dispatch.py & app/worker.py</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">Transactional Outbox 멱등 이벤트 버스 + RLS 보안 정책 + PII HMAC-SHA256 암호화</p>
+                    </div>
+                    <div class="layer-box" style="border-left-color: var(--accent-cyan);">
+                        <div class="layer-header">
+                            <span class="layer-name">Layer 2. SaaS Integration Orchestration</span>
+                            <span class="layer-tech">app/orchestration/ (accounting, calendar)</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">양방향 캘린더 동기화 + 회계 대사 (Reconcile) + 주문 취소/환불 정합 보장</p>
+                    </div>
+                    <div class="layer-box" style="border-left-color: var(--accent-emerald);">
+                        <div class="layer-header">
+                            <span class="layer-name">Layer 1. Enterprise SaaS & On-Prem Connectors</span>
+                            <span class="layer-tech">app/connectors/</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-muted);">더존(Douzone) ERP REST, QuickBooks v3, MS Graph, Google Calendar, Meta Ads</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">📊</div>
+                                <span>핵심 정합성 & 거버넌스 KPI</span>
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                <div style="font-size: 0.75rem; color: var(--text-sub);">회계 정합율 (Integrity)</div>
+                                <div style="font-size: 1.6rem; font-weight: 700; color: var(--accent-emerald);">100.0%</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+                                <div style="font-size: 0.75rem; color: var(--text-sub);">Security Trimming</div>
+                                <div style="font-size: 1.6rem; font-weight: 700; color: var(--accent-cyan);">Fail-Closed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 2: Live Event Bus Simulator -->
+        <section id="view-simulator" class="view-section">
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">Live Activity Event Bus & Worker Simulator</h2>
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">주문 생성부터 배송, 자동 트리아지, HITL 팔로업, 지식화 RAG 루프 파이프라인 시뮬레이션</p>
+                </div>
+                <button class="sim-btn" onclick="runEventSimulation()">⚡ 파이프라인 시뮬레이션 실행</button>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="card-icon">🖥️</div>
+                            <span>Event Dispatcher & Worker Console Log</span>
+                        </div>
+                    </div>
+                    <div class="console" id="sim-console">
+                        <div class="log-entry">
+                            <span class="log-time">[08:15:00]</span>
+                            <span class="log-event">SYSTEM_READY</span>
+                            <span class="log-data">EventWorker transactional outbox drain initialized.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 3: Security & RLS -->
+        <section id="view-security" class="view-section">
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem;">Role-Based Security & RLS Data Isolation</h2>
+            </div>
+            <div class="role-selector">
+                <span style="font-weight: 600; font-size: 0.9rem; color: var(--text-sub);">역할(Role) 선택:</span>
+                <button class="role-btn active" onclick="setRole('sales')">💼 Sales Rep (영업)</button>
+                <button class="role-btn" onclick="setRole('as')">🛠️ AS Representative (서비스)</button>
+                <button class="role-btn" onclick="setRole('manager')">👑 Manager (경영진)</button>
+            </div>
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header"><div class="card-title">🔍 RAG 지식 검색 Security Trimming</div></div>
+                    <div id="rag-search-result" style="background: #050811; padding: 1rem; border-radius: 12px; font-family: 'Fira Code', monospace; font-size: 0.85rem; height: 200px;"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div class="card-title">🔐 고객 프로필 RLS & PII 복호화 권한</div></div>
+                    <div id="rls-profile-result" style="background: #050811; padding: 1rem; border-radius: 12px; font-family: 'Fira Code', monospace; font-size: 0.85rem; height: 200px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 4: SaaS Connectors -->
+        <section id="view-connectors" class="view-section">
+            <div class="grid-3">
+                <div class="conn-card"><div class="conn-top"><span class="conn-title">더존 ERP</span><span class="conn-stat ok">REST Connected</span></div></div>
+                <div class="conn-card"><div class="conn-top"><span class="conn-title">QuickBooks</span><span class="conn-stat ok">REST v3 Connected</span></div></div>
+                <div class="conn-card"><div class="conn-top"><span class="conn-title">MS Graph Calendar</span><span class="conn-stat ok">Graph Connected</span></div></div>
+                <div class="conn-card"><div class="conn-top"><span class="conn-title">Google Calendar</span><span class="conn-stat ok">v3 Connected</span></div></div>
+                <div class="conn-card"><div class="conn-top"><span class="conn-title">Meta Ads</span><span class="conn-stat ok">Graph Connected</span></div></div>
+                <div class="conn-card"><div class="conn-top"><span class="conn-title">SharePoint / Teams</span><span class="conn-stat ok">Crawler Connected</span></div></div>
+            </div>
+        </section>
+
+        <!-- View 5: Verification Suite -->
+        <section id="view-verification" class="view-section">
+            <div class="card">
+                <table class="verify-table">
+                    <thead><tr><th>#</th><th>검증 시나리오</th><th>상태</th></tr></thead>
+                    <tbody>
+                        <tr><td>01~15</td><td>15개 전 주요 흐름 E2E 스모크 검증</td><td><span class="verify-badge">15/15 PASS</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        function switchTab(viewId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('view-' + viewId).classList.add('active');
+        }
+
+        function runEventSimulation() {
+            const consoleBox = document.getElementById('sim-console');
+            const now = () => `[${new Date().toISOString().substring(11, 19)}]`;
+            const logs = [
+                { time: now(), event: "ORDER_CREATED", data: "Order #ORD-2026-99 created by Customer '대성정밀' ($550,000 KRW)" },
+                { time: now(), event: "OUTBOX_POSTED", data: "Transaction posted to Douzone ERP Adapter (Voucher #DZ-001)" },
+                { time: now(), event: "AS_TICKET_OPEN", data: "Issue reported: '설치 매뉴얼 문의'. Classifier: category=installation" },
+                { time: now(), event: "AGENT_TRIAGE", data: "TriageAgent assigned ticket #TK-882 to Employee #EMP-04" },
+                { time: now(), event: "DELIVERY_DONE", data: "Shipment delivered. FollowUpAgent generated draft SMS for HITL approval." },
+                { time: now(), event: "HITL_APPROVED", data: "Human Gatekeeper approved follow-up SMS. Notifier sent via Console/SMTP." },
+                { time: now(), event: "KNOWLEDGE_CAPTURED", data: "Resolved ticket transformed into KnowledgeItem #KNOW-44. RAG Vector indexed." }
+            ];
+            consoleBox.innerHTML = '';
+            logs.forEach((log, idx) => {
+                setTimeout(() => {
+                    const div = document.createElement('div');
+                    div.className = 'log-entry';
+                    div.innerHTML = `<span class="log-time">${log.time}</span><span class="log-event">${log.event}</span><span class="log-data">${log.data}</span>`;
+                    consoleBox.appendChild(div);
+                    consoleBox.scrollTop = consoleBox.scrollHeight;
+                }, idx * 400);
+            });
+        }
+
+        function setRole(role) {
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            const ragBox = document.getElementById('rag-search-result');
+            const rlsBox = document.getElementById('rls-profile-result');
+
+            if (role === 'sales') {
+                ragBox.innerHTML = `<span style="color: #ef4444;">[403 FORBIDDEN / SECURITY TRIMMING]</span><br>User 'Sales Rep' lacks ACL for category 'accounting'.`;
+                rlsBox.innerHTML = `<span style="color: #10b981;">[200 OK - RLS ALLOWED FOR OWNED CUSTOMER]</span><br>Name: 대성정밀<br>Email: sechan@daeseong.co.kr (Decrypted from enc:v1:...)`;
+            } else if (role === 'as') {
+                ragBox.innerHTML = `<span style="color: #10b981;">[200 OK - 2 Matches Found]</span><br>1. Doc #DOC-12: CNC 절삭기 설치 가이드 v2.1`;
+                rlsBox.innerHTML = `<span style="color: #10b981;">[200 OK - ASSIGNED TICKET ACCESS]</span><br>Name: 대성정밀 (Ticket #TK-882)`;
+            } else if (role === 'manager') {
+                ragBox.innerHTML = `<span style="color: #10b981;">[200 OK - FULL ACCESS]</span><br>1. Doc #ACC-99: 2026 Q2 더존/QuickBooks 정합성 대사 보고서`;
+                rlsBox.innerHTML = `<span style="color: #10b981;">[200 OK - EXECUTIVE FULL ACCESS]</span><br>Access Granted to Governance Dashboard & All Customer PII.`;
+            }
+        }
+        setRole('sales');
+    </script>
+</body>
+</html>

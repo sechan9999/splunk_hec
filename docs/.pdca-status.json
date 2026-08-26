@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-07-24T12:12:09.976Z",
+  "lastUpdated": "2026-07-31T12:44:59.961Z",
   "activeFeatures": [
     "multi_llm_platform",
     "enterprise_mcp_connector",
@@ -24,7 +24,23 @@
     "FreightDesk",
     "demovid",
     "datahub-drift-guard",
-    "MCPagents-splunk-v3"
+    "MCPagents-splunk-v3",
+    "patient-analytics",
+    "ropes_exam_v2_live",
+    "llmai",
+    "unified-ops-ax",
+    "domain",
+    "events",
+    "ai",
+    "providers",
+    "rag",
+    "connectors",
+    "api",
+    "orchestration",
+    "agents",
+    "experience",
+    "governance",
+    "mcp"
   ],
   "primaryFeature": "datahub-drift-guard",
   "features": {
@@ -99,9 +115,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-06T21:34:59.163Z",
-        "lastUpdated": "2026-07-22T17:33:09.437Z"
+        "lastUpdated": "2026-07-27T02:12:06.512Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Local\\Temp\\claude\\C--Users-secha-AppData-Roaming-Claude-local-agent-mode-sessions-a11f8f4b-48be-4e38-bd6a-4577148c7465-e485b802-b1e9-4ba3-869f-815651779355-local-c7248499-7b6b-4409-aa8d-e718f46dde77-outputs-MCPagents-s-1iczsq\\1ba048ea-c938-4cc7-afaf-b47470a94f06\\scratchpad\\record_demo.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Local\\Temp\\claude\\C--Users-secha-AppData-Roaming-Claude-local-agent-mode-sessions-a11f8f4b-48be-4e38-bd6a-4577148c7465-e485b802-b1e9-4ba3-869f-815651779355-local-c7248499-7b6b-4409-aa8d-e718f46dde77-outputs-MCPagents-s-1iczsq\\0e2193b5-bc5c-4a82-97ea-09cb993cbb0a\\scratchpad\\shots.py"
     },
     "MCPagents-splunk-v2": {
       "phase": "do",
@@ -151,9 +167,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:49:46.900Z",
-        "lastUpdated": "2026-07-24T12:11:36.583Z"
+        "lastUpdated": "2026-07-31T11:06:16.400Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v3\\security\\fix.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\security\\rls.py"
     },
     "tests": {
       "phase": "do",
@@ -164,9 +180,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-07-07T18:53:10.868Z",
-        "lastUpdated": "2026-07-24T12:12:09.976Z"
+        "lastUpdated": "2026-07-31T12:40:19.215Z"
       },
-      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v3\\tests\\test_fix.py"
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\tests\\test_onprem_embedder.py"
     },
     "datahub-agent": {
       "phase": "act",
@@ -379,6 +395,234 @@
         "lastUpdated": "2026-07-24T12:11:56.292Z"
       },
       "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk-v3\\demo_app.py"
+    },
+    "patient-analytics": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-27T01:46:58.393Z",
+        "lastUpdated": "2026-07-27T03:09:21.486Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\patient-analytics\\app\\main.py"
+    },
+    "ropes_exam_v2_live": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-27T02:53:11.398Z",
+        "lastUpdated": "2026-07-27T03:05:34.898Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\ropes_exam_v2_live\\test_api_contract.py"
+    },
+    "llmai": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-28T16:51:11.406Z",
+        "lastUpdated": "2026-07-28T16:51:11.406Z"
+      },
+      "lastFile": "C:\\Users\\secha\\.claude\\projects\\Harness\\local-vixcode\\llmai\\llm.py"
+    },
+    "unified-ops-ax": {
+      "phase": "completed",
+      "phaseNumber": 6,
+      "matchRate": 93,
+      "iterationCount": 1,
+      "requirements": [],
+      "documents": {
+        "plan": "docs/01-plan/features/unified-ops-ax.plan.md",
+        "design": "docs/02-design/features/unified-ops-ax.design.md",
+        "analysis": "docs/03-analysis/unified-ops-ax.analysis.md",
+        "report": "docs/04-report/unified-ops-ax.report.md"
+      },
+      "deliveredPhases": [
+        "P1-hub+ai-platform",
+        "P2-saas-orchestration",
+        "P3-ai-agents",
+        "P4-experience-layer",
+        "P5-governance",
+        "hardening(auth,worker,rls,pii,quickbooks,msgraph,google,douzone,meta,notifier,pgvector,mcp)",
+        "keyless-local-stack(onprem-llm+embeddings)"
+      ],
+      "actIteration1": "A1 design-sync, A2 derived-views, A3 insights-agent; 88->93",
+      "testCount": 97,
+      "smokeCount": 15,
+      "liveVerified": "local Ollama (gemma3:4b + nomic-embed-text) 15/15",
+      "completedAt": "2026-07-31T00:00:00.000Z",
+      "reportPath": "docs/04-report/unified-ops-ax.report.md",
+      "timestamps": {
+        "started": "2026-07-30T21:47:25.286Z",
+        "lastUpdated": "2026-07-31T12:44:59.961Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\verify.py"
+    },
+    "domain": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:47:45.185Z",
+        "lastUpdated": "2026-07-31T11:07:10.638Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\domain\\schemas.py"
+    },
+    "events": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:48:28.347Z",
+        "lastUpdated": "2026-07-30T23:21:39.612Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\events\\dispatch.py"
+    },
+    "ai": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:48:59.558Z",
+        "lastUpdated": "2026-07-31T12:39:51.766Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\ai\\embeddings.py"
+    },
+    "providers": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:49:03.226Z",
+        "lastUpdated": "2026-07-30T21:49:37.943Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\ai\\providers\\onprem_provider.py"
+    },
+    "rag": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:50:09.782Z",
+        "lastUpdated": "2026-07-30T23:43:47.445Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\rag\\vectorstore.py"
+    },
+    "connectors": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:50:48.631Z",
+        "lastUpdated": "2026-07-31T11:45:41.208Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\connectors\\notify.py"
+    },
+    "api": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T21:51:55.579Z",
+        "lastUpdated": "2026-07-31T11:51:53.583Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\api\\routes_mcp.py"
+    },
+    "orchestration": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T22:21:26.594Z",
+        "lastUpdated": "2026-07-31T10:08:44.795Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\orchestration\\accounting.py"
+    },
+    "agents": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T22:31:18.944Z",
+        "lastUpdated": "2026-07-31T11:46:00.624Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\agents\\followup.py"
+    },
+    "experience": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T23:22:15.469Z",
+        "lastUpdated": "2026-07-31T11:06:55.259Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\experience\\workspace.py"
+    },
+    "governance": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-30T23:31:11.916Z",
+        "lastUpdated": "2026-07-30T23:31:50.707Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\governance\\dashboard.py"
+    },
+    "mcp": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-07-31T11:51:10.578Z",
+        "lastUpdated": "2026-07-31T11:51:44.508Z"
+      },
+      "lastFile": "C:\\Users\\secha\\AppData\\Roaming\\Claude\\local-agent-mode-sessions\\a11f8f4b-48be-4e38-bd6a-4577148c7465\\e485b802-b1e9-4ba3-869f-815651779355\\local_c7248499-7b6b-4409-aa8d-e718f46dde77\\outputs\\MCPagents-splunk\\unified-ops-ax\\app\\mcp\\server.py"
     }
   },
   "pipeline": {
@@ -389,7 +633,7 @@
   "session": {
     "startedAt": "2026-05-15T11:32:30.729Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-07-24T12:12:09.976Z"
+    "lastActivity": "2026-07-31T12:44:59.961Z"
   },
   "history": [
     {
@@ -2318,6 +2562,1218 @@
     {
       "timestamp": "2026-07-24T12:12:09.976Z",
       "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:46:58.393Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:47:26.344Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:47:35.990Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:47:48.116Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:48:00.722Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:48:03.242Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T01:56:00.180Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T02:10:29.958Z",
+      "feature": "scratchpad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T02:12:06.512Z",
+      "feature": "scratchpad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T02:53:11.398Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T02:53:42.363Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T02:53:56.206Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:00:44.662Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:01:07.054Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:01:26.232Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:05:34.898Z",
+      "feature": "ropes_exam_v2_live",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:08:31.820Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:08:46.391Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:08:54.063Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:09:21.486Z",
+      "feature": "patient-analytics",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-27T03:09:38.759Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-28T16:51:11.406Z",
+      "feature": "llmai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-28T16:51:23.325Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-28T16:51:33.551Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:47:25.286Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:47:32.072Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:47:40.039Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:47:45.185Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:22.061Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:28.347Z",
+      "feature": "events",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:35.682Z",
+      "feature": "events",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:39.059Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:45.679Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:52.328Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:48:59.558Z",
+      "feature": "ai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:03.227Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:07.875Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:14.416Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:21.411Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:30.193Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:37.943Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:47.167Z",
+      "feature": "ai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:49:59.104Z",
+      "feature": "ai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:50:09.782Z",
+      "feature": "rag",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:50:23.151Z",
+      "feature": "rag",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:50:32.640Z",
+      "feature": "rag",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:50:41.789Z",
+      "feature": "rag",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:50:48.631Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:50:55.406Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:03.995Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:15.337Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:20.778Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:31.311Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:44.670Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:51.422Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:51:55.579Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:52:03.786Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:52:12.666Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:52:17.601Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:52:23.326Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:52:49.173Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:53:00.457Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:53:11.754Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T21:53:20.991Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:02:14.893Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:07:01.842Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:07:16.887Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:07:24.660Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:07:53.310Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:08:02.493Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:08:09.423Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:08:47.942Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:09:12.933Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:09:37.829Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:09:42.659Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:09:54.085Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:16:28.305Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:17:28.049Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:20:39.386Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:20:45.861Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:21:02.694Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:21:21.322Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:21:26.594Z",
+      "feature": "orchestration",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:21:43.297Z",
+      "feature": "orchestration",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:21:54.491Z",
+      "feature": "orchestration",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:22:02.378Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:22:08.693Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:22:18.356Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:22:23.215Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:22:28.999Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:22:57.231Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:23:08.139Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:30:57.645Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:31:02.671Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:31:12.781Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:31:18.944Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:31:32.467Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:31:48.749Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:32:06.298Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:32:24.075Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:32:34.146Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:32:40.358Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:32:50.317Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:32:59.306Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:33:04.143Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:33:08.383Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T22:33:52.821Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:11:15.579Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:11:23.272Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:11:29.969Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:11:45.936Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:11:52.912Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:11:59.538Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:12:04.139Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:12:08.883Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:12:24.130Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:21:01.098Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:21:08.761Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:21:16.144Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:21:23.575Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:21:39.612Z",
+      "feature": "events",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:21:56.211Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:22:09.608Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:22:15.469Z",
+      "feature": "experience",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:22:39.471Z",
+      "feature": "experience",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:22:47.537Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:22:56.406Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:23:03.131Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:23:08.823Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:23:13.570Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:23:55.642Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:24:07.793Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:25:41.988Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:25:49.097Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:00.302Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:07.102Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:11.916Z",
+      "feature": "governance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:21.237Z",
+      "feature": "governance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:33.301Z",
+      "feature": "governance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:42.275Z",
+      "feature": "governance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:31:50.707Z",
+      "feature": "governance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:32:00.836Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:32:06.370Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:32:11.000Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:32:26.591Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:42:12.899Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:42:21.205Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:42:35.183Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:42:43.054Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:43:47.445Z",
+      "feature": "rag",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:44:06.258Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:44:13.694Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:44:29.833Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-30T23:45:30.942Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:07:31.371Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:07:38.795Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:00.364Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:11.054Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:19.216Z",
+      "feature": "orchestration",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:30.360Z",
+      "feature": "orchestration",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:44.795Z",
+      "feature": "orchestration",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:51.813Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:08:58.700Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:09:05.648Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:09:17.778Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T10:09:39.699Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:05:41.084Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:05:47.109Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:06:01.041Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:06:16.400Z",
+      "feature": "security",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:06:49.106Z",
+      "feature": "experience",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:06:55.259Z",
+      "feature": "experience",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:07:10.638Z",
+      "feature": "domain",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:07:25.838Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:07:57.019Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:08:22.661Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:39:51.957Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:40:08.938Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:40:16.164Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:40:24.428Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:40:35.096Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:45:22.402Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:45:41.208Z",
+      "feature": "connectors",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:45:50.104Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:46:00.624Z",
+      "feature": "agents",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:46:11.355Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:46:29.327Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:51:10.578Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:51:30.019Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:51:44.508Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:51:53.583Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:51:59.328Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:52:04.645Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T11:52:19.753Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:06:38.811Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:07:12.681Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:39:37.869Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:39:51.766Z",
+      "feature": "ai",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:40:05.108Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:40:19.215Z",
+      "feature": "tests",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:44:51.541Z",
+      "feature": "unified-ops-ax",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-07-31T12:44:59.961Z",
+      "feature": "unified-ops-ax",
       "phase": "do",
       "action": "updated"
     }

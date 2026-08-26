@@ -24,6 +24,16 @@ OPENAI_API_KEY=sk-...
 ```
 검증: `POST /gateway/chat {"message":"ping"}` → `provider` 확인.
 
+### 무키(Keyless) 완전 로컬 스택 — Ollama만으로 (API 키 0)
+```
+DEFAULT_LLM_PROVIDER=onprem
+ONPREM_BASE_URL=http://localhost:11434
+ONPREM_MODEL=llama3                   # 또는 gemma3:4b 등 받아둔 모델
+EMBEDDING_PROVIDER=onprem
+ONPREM_EMBEDDING_MODEL=nomic-embed-text
+```
+`ollama pull llama3 && ollama pull nomic-embed-text` 후 preflight → `llm: ok`, `embeddings: ok (keyless)`. LLM 추론 + RAG 의미검색까지 전부 로컬, 키·비용 0. (라이브 검증됨: gemma3:4b + nomic-embed-text로 RAG 근거답변·인용 정상.)
+
 ## 2. Postgres + pgvector (벡터 백엔드)
 ```
 DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/unifiedops

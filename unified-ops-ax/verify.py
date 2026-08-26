@@ -13,17 +13,19 @@ import tempfile
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-# Configure an isolated, offline environment BEFORE importing the app.
+# Configure an isolated environment BEFORE importing the app. DB/vector/PII are
+# forced for isolation; AI/notifier providers respect pre-set env (setdefault),
+# so `DEFAULT_LLM_PROVIDER=onprem ... python verify.py` runs against local Ollama.
 _fd, _db = tempfile.mkstemp(suffix=".db")
 os.close(_fd)
 os.environ.update({
     "DATABASE_URL": f"sqlite+pysqlite:///{_db}",
-    "DEFAULT_LLM_PROVIDER": "fake",
-    "EMBEDDING_PROVIDER": "fake",
     "VECTOR_BACKEND": "memory",
-    "NOTIFIER_PROVIDER": "fake",
     "PII_KEY": "verify-secret",  # exercise PII encryption
 })
+os.environ.setdefault("DEFAULT_LLM_PROVIDER", "fake")
+os.environ.setdefault("EMBEDDING_PROVIDER", "fake")
+os.environ.setdefault("NOTIFIER_PROVIDER", "fake")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -40,11 +42,12 @@ def main() -> int:
     with TestClient(app) as c:
         H = lambda t: {"Authorization": f"Bearer {t}"}
 
-        # 0. preflight — ready, offline LLM/vector, PII engaged
+        # 0. preflight — ready, PII engaged; LLM either fake or a live keyless/configured provider
         pf = c.get("/ops/preflight").json()
         by = {x["subsystem"]: x["status"] for x in pf["checks"]}
-        check("프리플라이트 (ready · LLM fake · PII on)",
-              pf["ready"] and by["llm"] == "fake" and by["vector"] == "ok" and by["pii"] == "configured",
+        check(f"프리플라이트 (ready · LLM={by['llm']} · PII on)",
+              pf["ready"] and by["llm"] in ("fake", "ok", "configured")
+              and by["vector"] == "ok" and by["pii"] == "configured",
               f"mode={pf['mode']}")
 
         # 1. actors
@@ -130,6 +133,22 @@ def main() -> int:
                                        "params": {"name": "get_customer_360", "arguments": {"customer_id": cid}}}).json()
         data = json.loads(rpc["result"]["content"][0]["text"])
         check("MCP 서버 (도구 7종 + tools/call)", len(tools) == 7 and data["customer"]["name"] == "대성정밀")
+
+        # 13. Douzone & Google Calendar REST adapters
+        import httpx
+        from app.connectors.accounting import DouzoneAdapter
+        from app.connectors.calendar import GoogleCalendarAdapter, ExternalEvent
+        dz = DouzoneAdapter(http=httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json={"result": {"voucher_no": "DZ-001"}}))))
+        dz_res = dz.post_transaction(order_id="ORD-DZ", amount=100000.0, currency="KRW")
+        gc = GoogleCalendarAdapter(http=httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json={"id": "G-001", "summary": "Meeting"}))))
+        gc_res = gc.upsert_event(ExternalEvent(external_id=None, title="Meeting", start="2026-08-01T10:00:00Z"))
+        check("더존 · Google 캘린더 REST 어댑터", dz_res.external_id == "DZ-001" and gc_res.external_id == "G-001")
+
+        # 14. Marketing Ads Connector
+        from app.connectors.marketing_ads import build_marketing_ads_adapter
+        mkt = build_marketing_ads_adapter()
+        mkt_sum = mkt.get_aggregate_summary()
+        check("마케팅 광고 성능 커넥터 (Aggregate Summary)", mkt_sum["active_campaigns"] >= 2 and mkt_sum["total_spend"] > 0)
 
     # summary
     print("\n" + "=" * 56)
