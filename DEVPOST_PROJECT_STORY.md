@@ -20,11 +20,16 @@ When an LLM model experiences an error burst or cost runaway, human operators ca
 ## How we built it
 We architected **Unified Ops AX** using modern agentic and operational frameworks:
 
-- **Core Engine**: Built with Python 3.11 and `asyncio.PriorityQueue` to manage asynchronous worker threads and non-blocking job execution.
-- **Agent Orchestration**: Integrated **Google Agent Development Kit (ADK)** for multi-agent delegation across specialized sub-agents (`pre_trip`, `planning`, `booking`, `in_trip`, `post_trip`).
-- **Telemetry & Monitoring**: Custom **Splunk HEC (HTTP Event Collector)** emitter with background batch flushing and zero-drop thread-safe queues.
-- **Multi-LLM Intelligent Router**: Dynamically calculates routing scores based on query complexity, quality weight, speed weight, and cost weight across OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), and Google (Gemini 3.5 Flash).
-- **Knowledge & Tools**: Context7 Upstash client for real-time library documentation fetching, Vector RAG store for semantic indexing, and FastAPI REST endpoints.
+### 🛠️ Languages, Tools & Frameworks
+- **Primary Language**: Python 3.11
+- **Agent Frameworks**: **Google Agent Development Kit (ADK)**, **Google GenAI SDK**
+- **AI Models**: **Gemini 3.5 Flash** (via GCP Vertex AI), Anthropic Claude 3.5 Sonnet, OpenAI GPT-4o
+- **Google Cloud Services**: **Vertex AI**, **Google Cloud Pub/Sub**, **GCP Eventarc**, **Google Cloud Run**
+- **Orchestration & Infrastructure**: **Kubernetes (K8s) HPA Pod Autoscaler**, `asyncio.PriorityQueue` Multi-Worker Engine
+- **Telemetry & Streams**: **Splunk HEC (HTTP Event Collector)**, **Apache Kafka**, Prometheus / Grafana `/metrics`
+- **Dashboard & Visualization**: **Streamlit**, **PyDeck 3D Spatial Maps**, CSS Glassmorphism
+- **Security & Knowledge**: Local Fine-Tuned DLP PII Masking (SHA-256), Vector RAG Store, Context7 Upstash Documentation Client
+- **Testing & Tooling**: Pytest, Pytest-Asyncio, Docker, FFmpeg, uv
 
 ---
 
