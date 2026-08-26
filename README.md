@@ -11,7 +11,7 @@
 ## 🌐 Live Web App & Screenshots
 
 👉 **Live Control Center**: **[https://unified-ops.streamlit.app/](https://unified-ops.streamlit.app/)** *(Alternative: [https://splunkax.streamlit.app/](https://splunkax.streamlit.app/))*  
-👉 **GitHub Repository**: **[https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax)** *(mapped to `sechan9999/splunk_hec`)*
+👉 **GitHub Repository**: **[https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax)**
 
 ### 🖥️ App Screenshots & PyDeck 3D Control Center
 
