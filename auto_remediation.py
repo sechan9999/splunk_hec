@@ -58,7 +58,7 @@ DEFAULT_POLICIES: List[RemediationPolicy] = [
         trigger_threshold = 5.0,   # $5/hour 초과
         actions           = ["switch_to_cheaper_model", "enable_aggressive_caching",
                              "notify_admin", "emit_telemetry"],
-        fallback_model    = "gpt-4o-mini",
+        fallback_model    = "gemini-3.5-flash",
         cost_weight_boost = 0.3,
         quality_weight_cut = 0.2,
         cooldown_sec      = 600,

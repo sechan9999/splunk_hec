@@ -206,9 +206,10 @@ class AsyncAgentEngine:
 
         uptime_sec = round(time.time() - self.start_time, 2) if self.start_time else 0.0
         throughput = round(self.total_processed / uptime_sec, 2) if uptime_sec > 0 else 0.0
-
+        active_workers = sum(1 for w in self.workers if not w.done()) if self.workers else 0
         return {
-            "is_running": self.is_running,
+            "is_running": self.is_running and active_workers > 0,
+            "active_workers": active_workers,
             "num_workers": self.num_workers,
             "uptime_sec": uptime_sec,
             "throughput_tasks_per_sec": throughput,
