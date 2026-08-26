@@ -1,16 +1,26 @@
-# 🔥 MCPAgents × Splunk — Agentic Ops Control Center
+# 🚀 Unified Ops AX — Autonomous AI Fleet Telemetry & Self-Healing Remediation Engine
 
-> **Splunk Agentic Ops Hackathon 2026** (May 18 – Jun 15, 2026)  
-> Built on: [sechan9999/MCPagents](https://github.com/sechan9999/MCPagents) + [sechan9999/splunk-app-examples](https://github.com/sechan9999/splunk-app-examples)
+> **[All Things Agentic Hackathon (Devpost)](https://allthingsagentichackathon.devpost.com/)** — Category: **Fortified Enterprise Fleet**  
+> Built with: **Google Agent Development Kit (ADK)** + **Google GenAI SDK** + **Gemini 3.5 Flash** + **Google Cloud Pub/Sub**  
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://splunkhec.streamlit.app/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://unified-ops.streamlit.app/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-sechan9999%2Funified--ops--ax-blue?logo=github)](https://github.com/sechan9999/unified-ops-ax)
 
-## 🌐 Live Demo
+---
 
-**👉 [https://splunkhec.streamlit.app/](https://splunkhec.streamlit.app/)**
+## 🌐 Live Web App & Screenshots
 
-The Streamlit Cloud deployment runs in **Demo Mode** by default — all 4 tabs (Agent Run, Live Splunk Events, Auto-Remediation, DLP/SOAR) work with simulated data. Toggle Demo Mode off in the sidebar to connect to real Splunk/MCPAgents backends.
-Unified Ops AX: https://splunkax.streamlit.app/
+👉 **Live Control Center**: **[https://unified-ops.streamlit.app/](https://unified-ops.streamlit.app/)** *(Alternative: [https://splunkax.streamlit.app/](https://splunkax.streamlit.app/))*  
+👉 **GitHub Repository**: **[https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax)** *(mapped to `sechan9999/splunk_hec`)*
+
+### 🖥️ App Screenshots & PyDeck 3D Control Center
+
+![Unified Ops AX Streamlit Control Center](assets/streamlit_dashboard.png)
+*Unified Ops AX Control Center displaying real-time 3D spatial flow map, background worker metrics, and K8s pod scaling controls.*
+
+![PyDeck 3D Spatial Fleet Map](assets/pydeck_3d_map.png)
+*PyDeck 3D Spatial Fleet Flow Map displaying multi-region telemetry ingest across GCP `us-central1` (Iowa), `europe-west1` (Belgium), and `asia-east1` (Taiwan).*
+
 ---
 
 ## 🎯 Core Innovation: Closed-Loop Agentic Ops

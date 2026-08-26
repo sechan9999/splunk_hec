@@ -1,14 +1,29 @@
-# 🔥 Unified Ops AX — Gemini Ops Fleet
+# 🚀 Unified Ops AX — Gemini Ops Fleet
 
-> **Devpost Submission for All Things Agentic Hackathon (Google Cloud & Vertex AI)**  
+> **Devpost Submission for [All Things Agentic Hackathon](https://allthingsagentichackathon.devpost.com/) (Google Cloud & Vertex AI)**  
 > **Repository:** [`sechan9999/unified-ops-ax`](https://github.com/sechan9999/unified-ops-ax)  
 > **Core Principle:** *"The instruction is a courtesy; the code is the contract."*
 
-[![Build & Verify Status](https://img.shields.io/badge/Tests-87%20Passed%20(Offline)-brightgreen.svg)]()
-[![E2E Verification](https://img.shields.io/badge/Verify.py-13%2F13%20Passed-blue.svg)]()
+[![Live Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://unified-ops.streamlit.app/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-sechan9999%2Funified--ops--ax-blue?logo=github)](https://github.com/sechan9999/unified-ops-ax)
+[![Build & Verify Status](https://img.shields.io/badge/Tests-25%20Passed-brightgreen.svg)]()
 [![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20ADK%20%7C%20Cloud%20Run-4285F4.svg)]()
 [![Model](https://img.shields.io/badge/LLM-Gemini%203.5%20Flash-34A853.svg)]()
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+---
+
+## 🌐 Live Web App & Screenshots
+
+👉 **Live Control Center**: **[https://unified-ops.streamlit.app/](https://unified-ops.streamlit.app/)** *(Alternative: [https://splunkax.streamlit.app/](https://splunkax.streamlit.app/))*  
+👉 **GitHub Repository**: **[https://github.com/sechan9999/unified-ops-ax](https://github.com/sechan9999/unified-ops-ax)**
+
+### 🖥️ App Control Center Screenshots
+
+![Unified Ops AX Streamlit Control Center](../assets/streamlit_dashboard.png)
+*Unified Ops AX Control Center displaying real-time 3D spatial flow map, background worker metrics, and K8s pod scaling controls.*
+
+![PyDeck 3D Spatial Fleet Map](../assets/pydeck_3d_map.png)
+*PyDeck 3D Spatial Fleet Flow Map displaying multi-region telemetry ingest across GCP `us-central1` (Iowa), `europe-west1` (Belgium), and `asia-east1` (Taiwan).*
 
 ---
 
